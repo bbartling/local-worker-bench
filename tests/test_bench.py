@@ -150,6 +150,37 @@ class RunnerTests(unittest.TestCase):
         self.assertFalse(self.report()['generation_complete'])
         self.assertEqual([p for p, _ in self.calls], ['/api/tags', '/api/chat', '/api/generate'])
 
+    def helper(self, prompt='Return a small synthetic JSON candidate.'):
+        source = self.folder / 'prompt.txt'
+        source.write_text(prompt, encoding='utf-8')
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            return cli.main(['ask', '--model', 'test:tiny', '--prompt-file', str(source),
+                             '--output', str(self.folder / 'candidate.json')])
+
+    def test_helper_candidate_never_executed_and_unloads(self):
+        self.assertEqual(self.helper(), 0)
+        result = json.loads((self.folder / 'candidate.json').read_text(encoding='utf-8'))
+        self.assertEqual(result['status'], 'needs_review')
+        self.assertFalse(result['code_executed'])
+        self.assertTrue(result['unload_requested'])
+        self.assertEqual(self.calls[-1][0], '/api/generate')
+
+    def test_helper_prompt_limit_and_existing_output(self):
+        self.assertEqual(self.helper('x' * 12001), 1)
+        self.assertFalse(self.calls)
+        self.assertEqual(self.helper(), 0)
+        original = (self.folder / 'candidate.json').read_bytes()
+        self.assertEqual(self.helper(), 1)
+        self.assertEqual(original, (self.folder / 'candidate.json').read_bytes())
+
+    def test_helper_timeout_and_truncation_fail(self):
+        for mode in ['network', 'length', 'bad_json', 'unload_error']:
+            with self.subTest(mode=mode):
+                self.mode = mode
+                self.assertEqual(self.helper(), 1)
+                self.assertEqual(self.calls[-1][0], '/api/generate')
+                (self.folder / 'candidate.json').unlink()
+
     def test_incomplete_and_failed_requests_unload(self):
         for mode in ['length', 'bad_json', 'network']:
             with self.subTest(mode=mode):

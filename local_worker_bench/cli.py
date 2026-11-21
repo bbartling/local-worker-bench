@@ -8,7 +8,7 @@ import sys
 
 from . import cases, reference
 from .probe import probe
-from .runner import run, write_json
+from .runner import run, ask, write_json
 from .tasks import TASKS
 
 
@@ -55,6 +55,16 @@ def main(argv=None):
     model.add_argument('--max-tokens', type=bounded(64, 1024), default=640)
     model.add_argument('--timeout', type=bounded(5, 300), default=180)
     model.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
+    helper = sub.add_parser('ask', help='One bounded supervised draft; no code execution')
+    helper.add_argument('--prompt-file', type=Path, required=True)
+    helper.add_argument('--output', type=Path, required=True)
+    helper.add_argument('--model', default='qwen3.5:4b')
+    helper.add_argument('--endpoint', default='http://127.0.0.1:11434')
+    helper.add_argument('--threads', type=bounded(1, 12), default=4)
+    helper.add_argument('--context', type=bounded(512, 8192), default=2048)
+    helper.add_argument('--max-tokens', type=bounded(64, 1024), default=384)
+    helper.add_argument('--timeout', type=bounded(5, 300), default=180)
+    helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     for name in ('check', '_check'):
         checker = sub.add_parser(name, help='Execute a manually reviewed candidate (not a sandbox)')
         checker.add_argument('--task', choices=('motor', 'elapsed'), required=True)
@@ -74,6 +84,8 @@ def main(argv=None):
         if args.command == 'hash':
             print(hashlib.sha256(args.source.read_bytes()).hexdigest())
             return 0
+        if args.command == 'ask':
+            return ask(args)
         if args.command == 'run':
             if len(set(args.tasks)) != len(args.tasks):
                 raise ValueError('Each task may occur only once per run.')

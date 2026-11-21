@@ -82,6 +82,15 @@ Output can contain endpoint data: inspect it before sharing. HTTP checks do not
 prove browser clicks, plots, or layout. Authentication is intentionally left to
 the application's approved client.
 
+## Use it as another agent's helper
+
+`ask` accepts one bounded prompt file and saves a JSON candidate for review.
+A Linux agent can reach Windows Ollama through a temporary SSH loopback forward;
+no public URL or IDE model-provider change is needed.
+See [remote helper setup](docs/remote-helper.md) for commands and the portable
+client archive. Keep the strong model responsible for verification and writes.
+For GPU/RAM tradeoffs, see the short [hardware notes](docs/hardware.md).
+
 ## Development
 
 ```sh

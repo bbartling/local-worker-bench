@@ -48,6 +48,7 @@ def main(argv=None):
     model = sub.add_parser('run', help='Explicit model calls; never executes generated code')
     model.add_argument('--model', required=True)
     model.add_argument('--endpoint', default='http://127.0.0.1:11434')
+    model.add_argument('--allow-lan', action='store_true', help='Explicitly allow a numeric RFC1918 IPv4 endpoint')
     model.add_argument('--tasks', nargs='+', choices=TASKS, default=list(TASKS))
     model.add_argument('--output', type=Path, default=Path('results') / 'trial')
     model.add_argument('--threads', type=bounded(1, 12), default=4)
@@ -58,12 +59,15 @@ def main(argv=None):
     helper = sub.add_parser('ask', help='One bounded supervised draft; no code execution')
     helper.add_argument('--prompt-file', type=Path, required=True)
     helper.add_argument('--output', type=Path, required=True)
-    helper.add_argument('--model', default='qwen3.5:4b')
+    selection = helper.add_mutually_exclusive_group()
+    selection.add_argument('--model', help='Exact cached model tag, instead of a routing tier')
+    selection.add_argument('--tier', choices=('fast', 'coder'), help='fast=Qwen 4B, coder=Qwen3-Coder 30B; default fast')
     helper.add_argument('--endpoint', default='http://127.0.0.1:11434')
+    helper.add_argument('--allow-lan', action='store_true', help='Explicitly allow a numeric RFC1918 IPv4 endpoint')
     helper.add_argument('--threads', type=bounded(1, 12), default=4)
     helper.add_argument('--context', type=bounded(512, 8192), default=2048)
-    helper.add_argument('--max-tokens', type=bounded(64, 1024), default=384)
-    helper.add_argument('--timeout', type=bounded(5, 300), default=180)
+    helper.add_argument('--max-tokens', type=bounded(64, 1024))
+    helper.add_argument('--timeout', type=bounded(5, 300))
     helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     for name in ('check', '_check'):
         checker = sub.add_parser(name, help='Execute a manually reviewed candidate (not a sandbox)')
@@ -85,6 +89,12 @@ def main(argv=None):
             print(hashlib.sha256(args.source.read_bytes()).hexdigest())
             return 0
         if args.command == 'ask':
+            if args.model is None:
+                args.tier = args.tier or 'fast'
+                args.model = {'fast': 'qwen3.5:4b', 'coder': 'qwen3-coder:30b'}[args.tier]
+            large = args.model == 'qwen3-coder:30b'
+            args.max_tokens = args.max_tokens or (640 if large else 384)
+            args.timeout = args.timeout or (300 if large else 180)
             return ask(args)
         if args.command == 'run':
             if len(set(args.tasks)) != len(args.tasks):
@@ -93,7 +103,10 @@ def main(argv=None):
         if args.command == '_check':
             return check_child(args)
         if args.command == 'check':
-            process = subprocess.run([sys.executable, '-m', 'local_worker_bench', '_check',
+            archive = Path(sys.argv[0])
+            entry = ([sys.executable, str(archive.resolve())] if archive.suffix.lower() == '.pyz' and archive.is_file()
+                     else [sys.executable, '-m', 'local_worker_bench'])
+            process = subprocess.run(entry + ['_check',
                 '--task', args.task, '--source', str(args.source.resolve()),
                 '--reviewed-sha256', args.reviewed_sha256], timeout=15, check=False,
                 encoding='utf-8', capture_output=True)

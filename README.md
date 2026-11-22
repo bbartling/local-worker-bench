@@ -85,10 +85,13 @@ the application's approved client.
 ## Use it as another agent's helper
 
 `ask` accepts one bounded prompt file and saves a JSON candidate for review.
-A Linux agent can reach Windows Ollama through a temporary SSH loopback forward;
-no public URL or IDE model-provider change is needed.
-See [remote helper setup](docs/remote-helper.md) for commands and the portable
-client archive. Keep the strong model responsible for verification and writes.
+A Linux agent can reach a Windows or Ubuntu Ollama server directly over a scoped
+private LAN connection. See [Windows/Ubuntu LAN setup](docs/ollama-lan-setup.md)
+for firewall/startup commands and `--tier fast|coder` model routing.
+For dual boot, [reuse the Windows models in Linux Mint](docs/linux-mint-model-migration.md).
+An [optional SSH tunnel](docs/remote-helper.md) is also available. Neither route
+needs a public URL or IDE model-provider change. Keep the strong model responsible
+for verification and writes.
 For GPU/RAM tradeoffs, see the short [hardware notes](docs/hardware.md).
 
 ## Development

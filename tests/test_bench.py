@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import threading
 import unittest
@@ -67,6 +68,61 @@ class FixtureTests(unittest.TestCase):
                 redirect_stderr(io.StringIO()):
             self.assertEqual(cli.main(['check', '--task', 'motor', '--source', 'x.py',
                                        '--reviewed-sha256', '0' * 64]), 1)
+
+    def test_lan_requires_opt_in_and_rejects_public_or_dns_targets(self):
+        for host in ['10.1.2.3', '172.16.0.2', '172.31.255.2', '192.168.1.10']:
+            endpoint = 'http://' + host + ':11435'
+            with self.subTest(host=host):
+                with self.assertRaises(ValueError):
+                    runner.endpoint_url(endpoint)
+                self.assertEqual(runner.endpoint_url(endpoint, True), endpoint)
+        for endpoint in ['http://8.8.8.8', 'http://172.32.0.2', 'http://169.254.1.1',
+                         'http://example.com', 'http://192.168.1.10:99999',
+                         'http://u:p@192.168.1.10', 'http://192.168.1.10/api',
+                         'https://192.168.1.10']:
+            with self.subTest(endpoint=endpoint), self.assertRaises(ValueError):
+                runner.endpoint_url(endpoint, True)
+
+    def test_supervisor_selects_tier_without_model_inference(self):
+        for tier, model, tokens, timeout in [('fast', 'qwen3.5:4b', 384, 180),
+                                           ('coder', 'qwen3-coder:30b', 640, 300)]:
+            with self.subTest(tier=tier), patch.object(cli, 'ask', return_value=0) as helper:
+                result = cli.main(['ask', '--tier', tier, '--prompt-file', 'synthetic.txt',
+                                   '--output', 'candidate.json', '--endpoint',
+                                   'http://192.168.1.10:11435', '--allow-lan'])
+                self.assertEqual(result, 0)
+                selected = helper.call_args.args[0]
+                self.assertEqual((selected.model, selected.max_tokens, selected.timeout),
+                                 (model, tokens, timeout))
+                self.assertEqual(selected.threads, 4)
+                self.assertTrue(selected.allow_lan)
+
+    def test_default_tier_is_fast_and_overrides_are_preserved(self):
+        with patch.object(cli, 'ask', return_value=0) as helper:
+            cli.main(['ask', '--prompt-file', 'synthetic.txt', '--output', 'candidate.json'])
+            self.assertEqual(helper.call_args.args[0].model, 'qwen3.5:4b')
+            cli.main(['ask', '--tier', 'coder', '--max-tokens', '128', '--timeout', '60',
+                      '--prompt-file', 'synthetic.txt', '--output', 'candidate.json'])
+            self.assertEqual(helper.call_args.args[0].max_tokens, 128)
+            self.assertEqual(helper.call_args.args[0].timeout, 60)
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            cli.main(['ask', '--tier', 'coder', '--model', 'test:tiny',
+                      '--prompt-file', 'synthetic.txt', '--output', 'candidate.json'])
+
+    def test_archive_checker_is_portable(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            archive = root / 'client.pyz'
+            builder = Path(__file__).resolve().parents[1] / 'scripts/build_zipapp.py'
+            subprocess.run([sys.executable, str(builder), '--output', str(archive)],
+                           check=True, capture_output=True, text=True, timeout=15)
+            source = root / 'reviewed.py'
+            source.write_bytes(inspect.getsource(reference.motor_gate).encode('utf-8'))
+            result = subprocess.run([sys.executable, str(archive), 'check', '--task', 'motor',
+                '--source', str(source), '--reviewed-sha256', hashlib.sha256(source.read_bytes()).hexdigest()],
+                cwd=root, capture_output=True, text=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['passed'], 49)
 
 
 class RunnerTests(unittest.TestCase):

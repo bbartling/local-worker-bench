@@ -1,5 +1,9 @@
 # A remote agent calling your local helper
 
+For **direct LAN access without SSH**, use the [Windows/Ubuntu setup guide](ollama-lan-setup.md).
+It includes restricted firewall rules and explicit `--tier fast|coder` routing.
+The tunnel below remains an optional alternative.
+
 Keep the strong model in charge. Its shell tool can call a small Ollama helper
 through SSH, receive a short draft, then independently test it. This does not
 replace the agent's model provider or change its IDE settings.

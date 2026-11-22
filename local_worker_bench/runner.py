@@ -1,6 +1,7 @@
 """Explicit, serial model requests. Never starts a server or executes candidates."""
 from contextlib import contextmanager
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -12,12 +13,21 @@ from .probe import NoRedirect
 from .tasks import TASKS, EXPECTED_FAILED
 
 
-def endpoint_url(value):
+def endpoint_url(value, allow_lan=False):
     parsed = urllib.parse.urlsplit(value)
-    if (parsed.scheme != 'http' or parsed.hostname not in ('localhost', '127.0.0.1', '::1')
+    local = parsed.hostname in ('localhost', '127.0.0.1', '::1')
+    lan = False
+    try:
+        address = ipaddress.IPv4Address(parsed.hostname)
+        lan = any(address in ipaddress.IPv4Network(net) for net in
+                  ('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'))
+    except (ipaddress.AddressValueError, TypeError):
+        pass
+    if (parsed.scheme != 'http' or not (local or (allow_lan and lan))
             or parsed.username or parsed.password or parsed.path not in ('', '/')
             or parsed.query or parsed.fragment):
-        raise ValueError('Use a loopback HTTP Ollama endpoint without credentials or a path.')
+        raise ValueError('Use loopback HTTP, or opt into a numeric RFC1918 IPv4 endpoint with --allow-lan; no credentials or path.')
+    parsed.port  # Validate the port rather than forwarding malformed endpoint strings.
     return value.rstrip('/')
 
 
@@ -65,7 +75,7 @@ def http_pass(answer):
 
 def ask(args):
     """One supervised draft from a redacted prompt; never interprets tool calls."""
-    endpoint = endpoint_url(args.endpoint)
+    endpoint = endpoint_url(args.endpoint, getattr(args, 'allow_lan', False))
     prompt = args.prompt_file.read_text(encoding='utf-8-sig')
     if not prompt.strip() or len(prompt) > 12000:
         raise ValueError('Use a nonempty prompt of at most 12,000 characters.')
@@ -75,7 +85,7 @@ def ask(args):
         models = api(endpoint, '/api/tags', timeout=5).get('models', [])
         if not any(args.model in (m.get('name'), m.get('model')) for m in models):
             raise ValueError('Requested exact model tag is not cached; no download attempted.')
-        result = {'model': args.model, 'threads': args.threads, 'code_executed': False,
+        result = {'model': args.model, 'tier': getattr(args, 'tier', None), 'threads': args.threads, 'code_executed': False,
                   'status': 'error', 'prompt_sha256': hashlib.sha256(prompt.encode('utf-8')).hexdigest()}
         began = time.monotonic()
         ok = False
@@ -118,7 +128,7 @@ def ask(args):
 
 
 def run(args):
-    endpoint = endpoint_url(args.endpoint)
+    endpoint = endpoint_url(args.endpoint, getattr(args, 'allow_lan', False))
     # Fresh directory prevents overwriting first-pass results with a repaired draft.
     with worker_lock():
         args.output.mkdir(parents=True, exist_ok=False)

@@ -47,3 +47,8 @@ as a current purchase recommendation.
 The existing narrow tests favored a small Qwen helper for extraction and the
 larger Coder for reviewed functions. They do not establish autonomous enterprise
 coding ability. Keep the stronger supervisor and deterministic acceptance tests.
+
+The [November 22 FP16 follow-up](benchmarks/2026-11-22-fp16.md) ran the 0.5B and
+7B FP16 coders on this CPU. The larger model fit with about 4.2 GiB available,
+but needed a plain-Python corrective request to pass the motor cases and generated
+about 1.7 tokens/s. Higher precision did not establish a better default helper.

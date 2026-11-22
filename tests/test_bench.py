@@ -124,6 +124,31 @@ class FixtureTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(result.stdout)['passed'], 49)
 
+    def test_import_fixture_distinguishes_parent_copy_from_wrapper_replacement(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            lessons = root / 'lessons'
+            lessons.mkdir()
+            wrapper = ('from pathlib import Path\nimport sys\n'
+                       'sys.path.insert(0,str(Path(__file__).resolve().parent.parent))\n'
+                       'from api_connection import *\n')
+            helper = 'DEFAULT_LOCAL="synthetic-default"\ndef resolve_base_url(): return DEFAULT_LOCAL\n'
+            (lessons / 'api_connection.py').write_text(wrapper, encoding='utf-8')
+            entry = lessons / 'lesson.py'
+            entry.write_text('from api_connection import DEFAULT_LOCAL\nprint(DEFAULT_LOCAL)\n', encoding='utf-8')
+            launch = ('import runpy,sys;sys.path.insert(0,sys.argv[1]);'
+                      'runpy.run_path(sys.argv[2],run_name="__main__")')
+            def invoke():
+                return subprocess.run([sys.executable, '-I', '-c', launch, str(lessons), str(entry)],
+                                      cwd=root, capture_output=True, text=True, timeout=10)
+            self.assertNotEqual(invoke().returncode, 0)
+            (root / 'api_connection.py').write_text(helper, encoding='utf-8')
+            self.assertNotEqual(invoke().returncode, 0)
+            (lessons / 'api_connection.py').write_text(helper, encoding='utf-8')
+            result = invoke()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout.strip(), 'synthetic-default')
+
 
 class RunnerTests(unittest.TestCase):
     def setUp(self):
@@ -165,6 +190,8 @@ class RunnerTests(unittest.TestCase):
             content = '{}'
         if self.mode == 'bad_json':
             content = '{broken'
+        if self.mode == 'plain':
+            content = 'def candidate():\n    return True\n'
         return {'done': True, 'done_reason': 'length' if self.mode == 'length' else 'stop',
                 'message': {'content': content, 'thinking': 'must not persist'}}
 
@@ -236,6 +263,28 @@ class RunnerTests(unittest.TestCase):
                 self.assertEqual(self.helper(), 1)
                 self.assertEqual(self.calls[-1][0], '/api/generate')
                 (self.folder / 'candidate.json').unlink()
+
+    def test_helper_text_is_explicit_and_never_executed(self):
+        self.mode = 'plain'
+        prompt = self.folder / 'prompt.txt'
+        prompt.write_text('Synthetic text candidate only.', encoding='utf-8')
+        with redirect_stdout(io.StringIO()):
+            code = cli.main(['ask', '--model', 'test:tiny', '--response-format', 'text',
+                '--prompt-file', str(prompt), '--output', str(self.folder / 'candidate.json')])
+        self.assertEqual(code, 0)
+        body = next(b for path, b in self.calls if path == '/api/chat')
+        self.assertNotIn('format', body)
+        result = json.loads((self.folder / 'candidate.json').read_text(encoding='utf-8'))
+        self.assertEqual(result['content'], 'def candidate():\n    return True\n')
+        self.assertEqual(result['status'], 'needs_review')
+        self.assertFalse(result['code_executed'])
+        self.assertNotIn('answer', result)
+
+    def test_helper_does_not_silently_downgrade_json(self):
+        self.mode = 'plain'
+        self.assertEqual(self.helper(), 1)
+        body = next(b for path, b in self.calls if path == '/api/chat')
+        self.assertEqual(body['format'], 'json')
 
     def test_incomplete_and_failed_requests_unload(self):
         for mode in ['length', 'bad_json', 'network']:

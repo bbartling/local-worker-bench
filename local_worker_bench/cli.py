@@ -69,6 +69,8 @@ def main(argv=None):
     helper.add_argument('--max-tokens', type=bounded(64, 1024))
     helper.add_argument('--timeout', type=bounded(5, 300))
     helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
+    helper.add_argument('--response-format', choices=('json', 'text'), default='json',
+                        help='JSON by default; opt into unstructured text for a supervised draft')
     for name in ('check', '_check'):
         checker = sub.add_parser(name, help='Execute a manually reviewed candidate (not a sandbox)')
         checker.add_argument('--task', choices=('motor', 'elapsed'), required=True)

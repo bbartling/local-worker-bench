@@ -168,6 +168,12 @@ threads, 2,048 context, JSON output, thinking off and immediate unload. Override
 the token/timeout budgets explicitly if needed. `--model` and `--tier` are mutually
 exclusive. Both tiers use the same URL; no server restart is needed to switch.
 
+`ask --response-format text` explicitly omits Ollama's JSON-format constraint.
+The saved receipt remains JSON, with unstructured model output in `content`.
+This is useful for supervised code drafts from models that struggle with JSON
+source strings. Output may still include Markdown/prose; inspect it before any
+execution. There is no automatic format fallback, source extraction or acceptance.
+
 The **supervisor chooses** the tier. There is no automatic escalation, execution
 of generated code, model download, or acceptance of a candidate. The portable
 remote client has no server-RAM admission check: confirm serving-machine headroom

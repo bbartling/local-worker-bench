@@ -89,6 +89,10 @@ A Linux agent can reach a Windows or Ubuntu Ollama server directly over a scoped
 private LAN connection. See [Windows/Ubuntu LAN setup](docs/ollama-lan-setup.md)
 for firewall/startup commands and `--tier fast|coder` model routing.
 For dual boot, [reuse the Windows models in Linux Mint](docs/linux-mint-model-migration.md).
+For the full 4B Q4 + 30B Q4 recipe, use the [Mint setup checklist](docs/linux-mint-4b-30b-setup.md)
+and [supervising-agent handoff](docs/prompts/linux-mint-local-worker-handoff.md).
+The earlier [Windows 4B + 7B FP16 lab handoff and client](examples/windows-ollama-fun/README.md)
+are archived separately; they retain Windows-specific paths and are not the Mint recipe.
 An [optional SSH tunnel](docs/remote-helper.md) is also available. Neither route
 needs a public URL or IDE model-provider change. Keep the strong model responsible
 for verification and writes.

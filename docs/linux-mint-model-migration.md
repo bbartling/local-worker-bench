@@ -5,6 +5,10 @@ apply to standard Ubuntu-based Linux Mint. This page covers moving existing
 models instead of downloading them again. It is a recipe, not a tested Mint
 installation; no Linux model server was installed during the Windows setup.
 
+For an end-to-end 4B Q4 + 30B Q4 recipe, including installation, loopback or scoped
+LAN/firewall setup, residency trials and cleanup, start with the
+[Mint setup checklist](linux-mint-4b-30b-setup.md).
+
 ## Find the Windows cache
 
 On Windows, models normally live at:

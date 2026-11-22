@@ -14,6 +14,11 @@ Those are weight-file sizes, not total runtime RAM. Start with 2,048 context,
 four inference threads and one request at a time across both models. A strong
 Cursor/Codex/Claude supervisor reviews drafts, runs tests and makes edits.
 
+For a lighter alternative, [4B + 7B Coder Q8](benchmarks/2026-11-22-q8-pair.md)
+completed a brief Windows memory trial with 9.32 GiB free. Its coder tag is
+`qwen2.5-coder:7b-instruct-q8_0`; it is a different recipe, not the default
+`--tier coder` routing. It has not been tested on Mint or qualified for coding.
+
 ## 1. Install Ollama and get these notes
 
 On the Mint terminal:

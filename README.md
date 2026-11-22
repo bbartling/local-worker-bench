@@ -105,6 +105,8 @@ what happened when the 4B and 7B models were kept loaded together on 32 GB RAM.
 The [4B + 30B trial](docs/benchmarks/2026-11-22-fast-coder-residency.md) and
 [overnight supervisor outline](docs/overnight-orchestration.md) cover the coding
 pair and what remains to build for unattended work.
+The [4B + 7B Q8 memory trial](docs/benchmarks/2026-11-22-q8-pair.md) completed a
+two-minute residency observation with 9.32 GiB free, a lighter alternative to FP16.
 For GPU/RAM tradeoffs, see the short [hardware notes](docs/hardware.md).
 
 ## Development

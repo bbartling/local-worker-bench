@@ -98,6 +98,14 @@ To remove only the managed firewall rules, use Administrator PowerShell:
 
 ## Ubuntu / Linux Mint server
 
+For the **locked Mint OptiPlex defaults** (4B + 30B dual-resident on
+`192.168.204.11:11435`, UFW scoped to `192.168.204.16`, boot warmup), follow
+[the Mint 4B+30B checklist](linux-mint-4b-30b-setup.md) and
+[the 2026-11-22 validation note](benchmarks/2026-11-22-mint-lan-dual-resident.md).
+The Ubuntu snippet below remains the generic one-model / unload-after-request
+LAN recipe; Mint intentionally opts into `MAX_LOADED_MODELS=2` and
+`KEEP_ALIVE=-1`.
+
 For an existing Windows cache, see [copying models into Mint](linux-mint-model-migration.md)
 before downloading the weights again.
 

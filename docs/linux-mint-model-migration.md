@@ -67,6 +67,10 @@ running server's `/api/tags` for both `qwen3.5:4b` and `qwen3-coder:30b`. Missin
 tags usually mean missing manifests, a wrong cache path, or service permissions.
 Ollama's Linux service user must be able to read/write the chosen cache.
 
+After those two tags work, prune other copied experiments so Mint defaults stay
+only the 4B and 30B pair (`ollama rm` on extras). The Windows source cache can
+keep the older tags for recovery.
+
 ## Overnight use
 
 Dual boot runs one OS at a time: booting Mint stops the Windows server. Verify

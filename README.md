@@ -96,6 +96,8 @@ For models that struggle with JSON-wrapped source, `ask --response-format text`
 explicitly requests plain text. Its JSON receipt stores the draft in `content`;
 it never executes or accepts that draft, and JSON failures never silently fall
 back to text. See the [CPU/FP16 comparison](docs/benchmarks/2026-11-22-fp16.md).
+The [dual-residency trial](docs/benchmarks/2026-11-22-dual-residency.md) records
+what happened when the 4B and 7B models were kept loaded together on 32 GB RAM.
 For GPU/RAM tradeoffs, see the short [hardware notes](docs/hardware.md).
 
 ## Development

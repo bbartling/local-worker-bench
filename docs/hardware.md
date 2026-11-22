@@ -52,3 +52,8 @@ The [November 22 FP16 follow-up](benchmarks/2026-11-22-fp16.md) ran the 0.5B and
 7B FP16 coders on this CPU. The larger model fit with about 4.2 GiB available,
 but needed a plain-Python corrective request to pass the motor cases and generated
 about 1.7 tokens/s. Higher precision did not establish a better default helper.
+
+A [brief dual-residency test](benchmarks/2026-11-22-dual-residency.md) confirmed
+both the 4B Q4 and 7B FP16 could be loaded together, but available RAM fell to
+1.93 GiB and the reserve guard stopped the trial. No slowdown was reported;
+sustained use with both loaded was not established.

@@ -8,6 +8,7 @@ from pathlib import Path
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 
 from .probe import NoRedirect
 from .tasks import TASKS, EXPECTED_FAILED
@@ -33,12 +34,23 @@ def endpoint_url(value, allow_lan=False):
 
 def api(endpoint, path, body=None, timeout=30):
     data = None if body is None else json.dumps(body).encode('utf-8')
-    request = urllib.request.Request(endpoint + path, data=data,
-                                     headers={'Content-Type': 'application/json'})
+    headers={'Content-Type':'application/json'}
+    token=os.environ.get('LWB_API_TOKEN')
+    if token: headers['Authorization']='Bearer '+token
+    request = urllib.request.Request(endpoint + path, data=data, headers=headers)
     # Local inference must not travel through an environment-configured proxy.
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
-    with opener.open(request, timeout=timeout) as response:
-        raw = response.read(2 * 1024 * 1024 + 1)
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            raw = response.read(2 * 1024 * 1024 + 1)
+    except urllib.error.HTTPError as error:
+        try:
+            detail=json.loads(error.read(4096)).get('error','Request rejected')
+        except (ValueError,AttributeError):
+            detail='Request rejected'
+        finally:
+            error.close()
+        raise ValueError(f'Inference HTTP {error.code}: {detail}') from error
     if len(raw) > 2 * 1024 * 1024:
         raise ValueError('Ollama response exceeds 2 MiB.')
     result = json.loads(raw)
@@ -48,10 +60,12 @@ def api(endpoint, path, body=None, timeout=30):
 
 
 @contextmanager
-def worker_lock():
+def worker_lock(name='inference.lock'):
     folder = Path.home() / '.cache' / 'local-worker-bench'
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / 'inference.lock'
+    if name not in ('inference.lock','offload-engine.lock'):
+        raise ValueError('Unknown worker lock.')
+    path = folder / name
     try:
         fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     except FileExistsError:

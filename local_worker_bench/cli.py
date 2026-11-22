@@ -54,7 +54,7 @@ def main(argv=None):
     model.add_argument('--threads', type=bounded(1, 12), default=4)
     model.add_argument('--context', type=bounded(512, 8192), default=2048)
     model.add_argument('--max-tokens', type=bounded(64, 1024), default=640)
-    model.add_argument('--timeout', type=bounded(5, 300), default=180)
+    model.add_argument('--timeout', type=bounded(5, 1800), default=180)
     model.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     helper = sub.add_parser('ask', help='One bounded supervised draft; no code execution')
     helper.add_argument('--prompt-file', type=Path, required=True)
@@ -67,10 +67,22 @@ def main(argv=None):
     helper.add_argument('--threads', type=bounded(1, 12), default=4)
     helper.add_argument('--context', type=bounded(512, 8192), default=2048)
     helper.add_argument('--max-tokens', type=bounded(64, 1024))
-    helper.add_argument('--timeout', type=bounded(5, 300))
+    helper.add_argument('--timeout', type=bounded(5, 1800))
     helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     helper.add_argument('--response-format', choices=('json', 'text'), default='json',
                         help='JSON by default; opt into unstructured text for a supervised draft')
+    offload=sub.add_parser('serve-offload',help='Explicit loopback API over registered disk-backed GGUF workers; no automatic inference')
+    offload.add_argument('--config',type=Path,required=True)
+    offload.add_argument('--port',type=bounded(1024,65535),default=11437)
+    offload.add_argument('--results',type=Path,default=Path('results/offload-api'))
+    offload.add_argument('--monitored-only',action='store_true',help='Explicitly run without a Windows hard working-set maximum; resource watchdog still aborts')
+    gateway=sub.add_parser('serve-gateway',help='Pi/control-plane HTTP gateway only; never inference')
+    gateway.add_argument('--upstream',default='http://127.0.0.1:11447')
+    gateway.add_argument('--allow-lan-upstream',action='store_true')
+    gateway.add_argument('--host',default='127.0.0.1'); gateway.add_argument('--allow-lan-listen',action='store_true')
+    gateway.add_argument('--port',type=bounded(1024,65535),default=11434)
+    gateway.add_argument('--token-file',type=Path,required=True)
+    gateway.add_argument('--timeout',type=bounded(5,1800),default=1800)
     for name in ('check', '_check'):
         checker = sub.add_parser(name, help='Execute a manually reviewed candidate (not a sandbox)')
         checker.add_argument('--task', choices=('motor', 'elapsed'), required=True)
@@ -85,6 +97,12 @@ def main(argv=None):
     http.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command=='serve-gateway':
+            from .gateway import serve
+            return serve(args)
+        if args.command=='serve-offload':
+            from .offload_api import serve
+            return serve(args)
         if args.command == 'selftest':
             return selftest()
         if args.command == 'hash':

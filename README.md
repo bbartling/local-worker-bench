@@ -5,6 +5,8 @@ standard library only. Works on Windows and Linux. No installation step.
 
 ## Start here
 
+Cluster planning: [Raspberry Pi control plane, with no inference](docs/pi-control-plane-plan.md).
+
 From this repository, run:
 
 ```sh

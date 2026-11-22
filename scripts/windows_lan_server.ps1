@@ -3,7 +3,9 @@
 param(
     [ValidateSet('Start','Status','Stop')][string]$Action = 'Status',
     [string]$LocalAddress,
-    [ValidateRange(1024,65535)][int]$Port = 11435
+    [ValidateRange(1024,65535)][int]$Port = 11435,
+    [ValidateRange(1,2)][int]$MaxLoadedModels = 1,
+    [ValidateSet('0','-1')][string]$KeepAlive = '0'
 )
 $ErrorActionPreference = 'Stop'
 $folder = Join-Path $env:LOCALAPPDATA 'LocalWorkerBench'
@@ -47,8 +49,8 @@ if ($Action -eq 'Start') {
     if (!(Test-Path -LiteralPath $exe)) { throw 'Ollama is not installed in its default Windows location.' }
     New-Item -ItemType Directory -Path $folder -Force | Out-Null
     $settings = @{OLLAMA_HOST="${LocalAddress}:$Port"; OLLAMA_NO_CLOUD='true'; OLLAMA_NOPRUNE='true';
-                  OLLAMA_DEBUG_LOG_REQUESTS='false'; OLLAMA_NUM_PARALLEL='1'; OLLAMA_MAX_LOADED_MODELS='1';
-                  OLLAMA_CONTEXT_LENGTH='2048'; OLLAMA_KEEP_ALIVE='0'}
+                  OLLAMA_DEBUG_LOG_REQUESTS='false'; OLLAMA_NUM_PARALLEL='1'; OLLAMA_MAX_LOADED_MODELS=[string]$MaxLoadedModels;
+                  OLLAMA_CONTEXT_LENGTH='2048'; OLLAMA_KEEP_ALIVE=$KeepAlive}
     $previous = @{}
     try {
         foreach ($key in $settings.Keys) {
@@ -72,7 +74,8 @@ if ($Action -eq 'Start') {
             throw 'Listener ownership/address does not match the requested server.'
         }
         @{pid=$server.Id; exe=$exe; started_utc=$server.StartTime.ToUniversalTime().ToString('o');
-          endpoint="http://${LocalAddress}:$Port"; local_address=$LocalAddress} | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
+          endpoint="http://${LocalAddress}:$Port"; local_address=$LocalAddress;
+          max_loaded_models=$MaxLoadedModels; keep_alive=$KeepAlive} | ConvertTo-Json | Set-Content -LiteralPath $statePath -Encoding UTF8
     } catch {
         if (!$server.HasExited) { & taskkill.exe /PID $server.Id /T /F | Out-Null }
         throw
@@ -86,5 +89,6 @@ $loaded = Invoke-RestMethod "$endpoint/api/ps" -TimeoutSec 3
 $cached = Invoke-RestMethod "$endpoint/api/tags" -TimeoutSec 3
 @{running=$true; pid=$current.process.Id; endpoint=$endpoint; version=$version.version;
   loaded_models=@($loaded.models | ForEach-Object {$_.name}); cached_models=@($cached.models | ForEach-Object {$_.name});
+  max_loaded_models=$current.state.max_loaded_models; keep_alive=$current.state.keep_alive;
   free_ram_gib=[math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory/1MB,2);
   inference_started=$false} | ConvertTo-Json -Depth 4

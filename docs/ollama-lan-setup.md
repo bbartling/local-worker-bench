@@ -48,6 +48,33 @@ State/logs live in `%LOCALAPPDATA%/LocalWorkerBench`; requests are not debug-log
 It stays running idle until stopped or the Windows session ends. There is no
 automatic reboot/logon startup; rerun Start afterward. A busy port is refused.
 
+### Optional two-model residency experiment
+
+Only when the user explicitly requests a warm pair, stop the idle owned server
+and opt in to two resident models and indefinite keep-alive:
+
+```powershell
+./scripts/windows_lan_server.ps1 -Action Stop
+./scripts/windows_lan_server.ps1 -Action Start -LocalAddress 192.168.1.10 -MaxLoadedModels 2 -KeepAlive '-1'
+```
+
+This starts the server only; it does not preload weights or start generation.
+The ordinary defaults remain one loaded model and keep-alive zero. State/status
+records both requested settings. They are process-local, not machine-wide.
+Requests with `keep_alive:0` still unload their selected model; the existing
+`ask` client deliberately does this, so a warm experiment needs a different
+explicit request lifecycle. Do not silently change the ordinary worker's policy.
+
+Two resident models do not imply two simultaneous requests: serialize requests
+across both, with four threads and bounded context. The launcher itself does
+not monitor RAM. Check available memory before and between requests; stop new
+inference and unload when the shared desktop lacks headroom. A November 22
+attempt to retain 4B Q4 plus 7B FP16 was stopped by its separate two-GiB reserve
+monitor at 1.41 GiB free. Residency has not been qualified for unattended work.
+
+After the experiment, stop and Start again without those optional arguments to
+restore the ordinary configuration. No firewall change is needed.
+
 Download models if not already cached (downloads do not run inference):
 
 ```powershell

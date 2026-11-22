@@ -98,6 +98,9 @@ it never executes or accepts that draft, and JSON failures never silently fall
 back to text. See the [CPU/FP16 comparison](docs/benchmarks/2026-11-22-fp16.md).
 The [dual-residency trial](docs/benchmarks/2026-11-22-dual-residency.md) records
 what happened when the 4B and 7B models were kept loaded together on 32 GB RAM.
+The [4B + 30B trial](docs/benchmarks/2026-11-22-fast-coder-residency.md) and
+[overnight supervisor outline](docs/overnight-orchestration.md) cover the coding
+pair and what remains to build for unattended work.
 For GPU/RAM tradeoffs, see the short [hardware notes](docs/hardware.md).
 
 ## Development

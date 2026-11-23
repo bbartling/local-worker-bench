@@ -1,6 +1,8 @@
 # Three-worker CPU cluster: API and coordinator on worker 1
 
 Status: deployment plan, not a deployed or measured physical cluster.
+The [80B single-PC disk-backed trials](benchmarks/2026-11-23-sequential-streaming.md)
+now provide coding/memory evidence; remote RPC disk backing remains future work.
 We have now [measured three local native RPC devices](benchmarks/2026-11-23-local-rpc.md)
 on one PC with the cached 4B model. This does not establish physical-node isolation.
 This replaces the separate-controller design. There are three computers total.

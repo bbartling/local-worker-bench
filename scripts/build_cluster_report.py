@@ -67,12 +67,12 @@ class HopDiagram(Flowable):
         c.drawString(0,9,'Private ggml RPC links; response returns through worker 1. Proposed topology.')
 
 page(1,'Local AI, spread across\nsmall computers','A practical guide to models, memory, APIs and an overnight coding cluster.')
-p('Prepared for Ben | 22 November 2026 | local-worker-bench','SmallX')
+p('Prepared for Ben | Updated 23 November 2026 | local-worker-bench','SmallX')
 note('<b>The design:</b> three CPU workers, with worker 1 hosting the application API, complete checkpoint on SSD, inference coordinator and local compute. Workers 2 and 3 expose native RPC compute. No separate controller computer is required.')
 story.append(HopDiagram())
 h('What this report helps you decide')
 p('What a model contains; how its computation can be divided; what memory and disk offload really mean; which libraries do which jobs; what our API accepts; and what happens at every request hop.')
-p('<b>Status:</b> the repository contains experimental API/offload tools and a small four-process numerical proof. A physical three-worker cluster, durable overnight queue, and 80B cluster quality benchmark are still proposed work. Examples labeled illustrative are not measured responses.')
+p('<b>Status:</b> measured work includes a small four-process numerical proof, native loopback RPC practice and actual 80B disk-backed coding on one PC. Pages 20-25 cover those new results and hosted-model supervision. A physical three-worker cluster and durable overnight queue remain proposed. Illustrative examples are not measured responses.')
 p('Repository: <link href="https://github.com/bbartling/local-worker-bench" color="#087F8C">github.com/bbartling/local-worker-bench</link>','SmallX')
 
 page(2,'What a model actually is','A model is a learned numerical program, plus the instructions needed to run it.')
@@ -187,10 +187,10 @@ table(['Model situation','What to expect'],[
 ('Quantized checkpoint','Engine must understand both the architecture and exact quantization format. A GGUF extension alone is not a compatibility guarantee.'),
 ('Hosted proprietary model','No local checkpoint means we cannot partition its weights. We can route API calls to it, which is a different operation.')],[140,340])
 h('Evidence we have versus work still ahead')
-p('<b>Verified engineering checks:</b> 56 repository tests passed, plus 95 deterministic fixture controls. These offline checks do not establish that a model solved 95 tasks. Gateway tests use a fake upstream, including unavailable-worker behavior.')
+p('<b>Verified engineering checks:</b> 63 repository tests passed, plus 95 deterministic fixture controls. These offline checks do not establish that a model solved 95 tasks. Gateway tests use a fake upstream, including unavailable-worker behavior.')
 p('<b>Small-model proof:</b> Qwen3-0.6B split over four local TCP processes matched eight FP64 stage boundaries and two greedy token results against its reference. It is not a three-physical-node or coding-quality result.')
 p('<b>Bounded 30B run:</b> the rebuilt single-worker backend completed HTTP, motor, elapsed and import generations with four threads / 2048 context. HTTP matched the verdict; reviewed motor scored 49/49 and elapsed 39/46 first pass. Import is ungraded. A prior bundled-backend load failed the desktop reserve; that failure matters.')
-p('<b>Not established:</b> an 80B quality win, a physical three-node memory/speed result, durable overnight jobs, or a universal model slicer. The next useful test is three-node correctness on a small model, then identical reviewed coding tasks under each hardware budget.')
+p('<b>Later measured results:</b> pages 18-25 cover small-model native RPC practice, then actual 80B single-PC disk-backed coding grades. A physical three-node memory/speed result, durable overnight jobs and a universal model slicer remain unestablished. The larger model did not win every fixture.')
 note('For coding delegation, the stronger assistant remains supervisor: give bounded context, require a candidate, inspect it, run independent checks, and preserve failed first attempts. A valid HTTP 200 or fluent explanation is not a correct patch.')
 
 page(10,'Reference and quick-start map','Read the architecture first; treat prototypes as experiments with explicit acceptance criteria.')
@@ -241,6 +241,8 @@ p('[8] <link href="https://docs.vllm.ai/en/latest/serving/parallelism_scaling/" 
 from cluster_report_appendix import append_pages, append_practice_results
 append_pages(story,page,p,h,code,table,note)
 append_practice_results(story,page,p,h,code,table,note,ROOT)
+from streaming_report_appendix import append as append_streaming
+append_streaming(story,page,p,h,code,table,note,ROOT)
 
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42)

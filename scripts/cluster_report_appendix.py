@@ -178,6 +178,6 @@ def append_practice_results(story,page,p,h,code,table,note,root):
     table(['Physical RAM per host','Proposed inference budgets','Weight-only result'],[
         [f"{r['physical_gib_per_host']} GiB",' / '.join(str(v) for v in r['inference_budgets_gib'])+' GiB',
             'Within budgets; runtime unverified' if r['serialized_weights_within_budgets'] else 'Exceeds budgets'] for r in plan['planning_budget_checks']],[130,160,190])
-    note('80B inference was not launched by this practice harness. Its <=6 GiB model-file admission guard prevents accidental escalation. Stock RPC allocation does not supply our proposed disk-backed layer streaming. Closing apps cannot make 45.09 GiB of weights fully resident in a 32 GiB host.')
+    note('This earlier RPC practice did not launch 80B inference. Later pages document actual 80B CPU stream/paged trials, admitted only with an explicit verified large-model manifest. The RPC mode retains its small-file guard and ordinary heap allocation. Closing apps cannot make 45.09 GiB of weights fully resident in a 32 GiB host.')
     h('Next milestone')
     p('Either validate resident RPC on three higher-memory computers, or build and verify explicit disk-backed execution with measured global memory, I/O and cleanup. Passing small-model plumbing and coding tests is necessary evidence, not proof that a larger hybrid MoE model will fit or improve quality.')

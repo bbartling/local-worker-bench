@@ -119,7 +119,10 @@ def ask(args):
             message = response.get('message')
             if not isinstance(message, dict) or not isinstance(message.get('content'), str):
                 raise ValueError('No text message returned.')
-            result.update(content=message['content'], done_reason=response.get('done_reason'))
+            result.update(content=message['content'], done_reason=response.get('done_reason'),
+                timing={k:response.get(k) for k in ('total_duration','load_duration','prompt_eval_count',
+                    'prompt_eval_duration','eval_count','eval_duration')},
+                resource_receipt=response.get('resource_receipt'))
             if response.get('done') is not True or result['done_reason'] != 'stop':
                 raise ValueError('Incomplete response; candidate must not be accepted.')
             if not result['content'].strip():

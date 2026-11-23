@@ -1,5 +1,9 @@
 # Experimental CPU offload tools
 
+Completed follow-up: [sequential resident-layer implementation](sequential-layer-streaming.md)
+and [80B graded coding results](benchmarks/2026-11-23-sequential-streaming.md).
+This adds single-process mapped-weight eviction/paging, not remote RPC disk backing.
+
 These tools are opt-in research prototypes. The worker placement and three-worker
 deployment TODO are in [the control-plane plan](three-worker-cluster-plan.md).
 The [API and cluster write-up](llama-api-and-cluster.md) explains the native

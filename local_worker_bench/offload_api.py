@@ -20,6 +20,7 @@ import uuid
 
 from . import memory
 from .runner import worker_lock
+from .streaming import summarize as summarize_streaming, verified as verified_streaming
 
 
 class ApiError(Exception):
@@ -36,15 +37,17 @@ def read_config(path):
     if not isinstance(models,dict) or not models: raise ValueError('Register at least one model.')
     for name,profile in models.items():
         if not isinstance(name,str) or not name or len(name)>100: raise ValueError('Invalid model alias.')
+        if type(profile.setdefault('layer_stream',False)) is not bool: raise ValueError('layer_stream must be a bool.')
         files=profile.get('files')
         if not isinstance(files,list) or not files: raise ValueError('Register all GGUF split files, in order.')
         profile['files']=[str((path.parent/Path(f)).resolve()) if not Path(f).is_absolute() else f for f in files]
         for key,default,low,high in [('threads',4,1,4),('context',2048,512,8192),('max_tokens',640,1,1024),
                                     ('request_timeout',600,5,1800),('load_timeout',180,5,600),
-                                    ('working_set_gib',8,0.05,24),('reserve_gib',6,2,24)]:
+                                    ('working_set_gib',8,0.05,24),('reserve_gib',6,2,24),
+                                    ('private_limit_gib',6 if profile['layer_stream'] else 16,1,16)]:
             value=profile.setdefault(key,default)
             if isinstance(value,bool) or not isinstance(value,(float,int)) or not low<=value<=high: raise ValueError('Invalid model profile setting: '+key)
-            if key not in ('working_set_gib','reserve_gib') and type(value) is not int: raise ValueError('Integer setting required: '+key)
+            if key not in ('working_set_gib','reserve_gib','private_limit_gib') and type(value) is not int: raise ValueError('Integer setting required: '+key)
     return config
 
 
@@ -124,7 +127,8 @@ class Manager:
         sample=dict(seconds=round(time.monotonic()-began,3),**global_mem,**process_mem); samples.append(sample)
         if global_mem['available_bytes']<profile['reserve_gib']*memory.GIB: raise ApiError('Free RAM fell below the desktop reserve; worker stopped.',503)
         if global_mem['available_commit_bytes'] is not None and global_mem['available_commit_bytes']<memory.GIB: raise ApiError('System commit reserve is low; worker stopped.',503)
-        if process_mem['private_bytes']>16*memory.GIB: raise ApiError('Worker private memory exceeded 16 GiB; stopped.',503)
+        private_limit=profile.get('private_limit_gib',6 if profile.get('layer_stream',False) else 16)
+        if process_mem['private_bytes']>private_limit*memory.GIB: raise ApiError(f'Worker private memory exceeded {private_limit} GiB; stopped.',503)
         if process_mem['rss_bytes']>(profile['working_set_gib']+0.25)*memory.GIB: raise ApiError('Worker exceeded the observed residency limit; stopped.',503)
 
     def chat(self,body):
@@ -155,11 +159,13 @@ class Manager:
             '--threads-batch',str(profile['threads']),'--ctx-size',str(profile['context']),
             '--parallel','1','--gpu-layers','0','--device','none','--fit','off',
             '--load-mode','mmap','--lazy-mode','on','--no-repack','--no-warmup','--cache-ram','0']
+        if profile.get('layer_stream',False):command+=['--log-verbosity','5']
         process=None; began=time.monotonic()
         try:
             env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_ARG_')}
             env.update(OMP_NUM_THREADS=str(profile['threads']),MKL_NUM_THREADS=str(profile['threads']),OPENBLAS_NUM_THREADS=str(profile['threads']))
             env['LWB_DISABLE_MMAP_PREFETCH']='1'
+            env['LWB_LAYER_STREAM']='1' if profile.get('layer_stream',False) else '0'
             receipt['bulk_prefetch_disable_requested']=True
             with (folder/'backend.log').open('w',encoding='utf-8') as log:
                 process=subprocess.Popen(command,env=env,stdout=log,stderr=subprocess.STDOUT,
@@ -215,7 +221,13 @@ class Manager:
             if receipt['samples']:
                 receipt['summary']={'peak_rss_gib':max(s['rss_bytes'] for s in receipt['samples'])/memory.GIB,
                     'minimum_available_ram_gib':min(s['available_bytes'] for s in receipt['samples'])/memory.GIB}
+            streaming_error=False
+            if profile.get('layer_stream',False):
+                receipt['streaming']=summarize_streaming((folder/'backend.log').read_text(encoding='utf-8',errors='replace'))
+                streaming_error=receipt.get('status')=='completed' and not verified_streaming(receipt['streaming'])
+                if streaming_error:receipt.update(status='error',error='Requested layer streaming was not verified in backend trace.')
             (folder/'receipt.json').write_text(json.dumps(receipt,indent=2),encoding='utf-8')
+            if streaming_error:raise ApiError('Requested layer streaming was not verified; inspect receipt.',502)
 
 
 def handler_for(manager):
@@ -238,11 +250,15 @@ def handler_for(manager):
             elif self.path=='/v1/models': self.reply(200,{'object':'list','data':[{'id':m['name'],'object':'model','owned_by':'local'} for m in models if m['available']]})
             else: self.reply(404,{'error':'Unknown endpoint.'})
         def do_POST(self):
-            if not self.allowed(): return
             try:
+                # Drain a bounded request before closing an Origin-rejected
+                # connection; unread POST bytes can discard the reply on Windows.
+                self.connection.settimeout(10)
                 length=int(self.headers.get('Content-Length','0'))
                 if not 0<length<=1024**2: raise ApiError('Use a JSON body no larger than 1 MiB.',413)
-                body=json.loads(self.rfile.read(length))
+                raw=self.rfile.read(length)
+                if not self.allowed(): return
+                body=json.loads(raw)
                 if not isinstance(body,dict): raise ApiError('Expected JSON object.')
                 if self.path=='/api/generate':
                     if set(body)-{'model','keep_alive'} or body.get('keep_alive')!=0 or body.get('model') not in manager.config['models']: raise ApiError('Only explicit unload is supported by /api/generate.')

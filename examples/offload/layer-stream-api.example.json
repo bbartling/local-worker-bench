@@ -1,0 +1,34 @@
+{
+  "backend_executable": "../../results/layer-stream-backend/build/bin/Release/llama-server.exe",
+  "models": {
+    "cached-4b-stream": {
+      "files": ["C:/path/to/cached-4b.gguf"],
+      "layer_stream": true,
+      "threads": 4,
+      "context": 2048,
+      "max_tokens": 128,
+      "working_set_gib": 4,
+      "private_limit_gib": 6,
+      "reserve_gib": 6,
+      "request_timeout": 600,
+      "load_timeout": 180
+    },
+    "coder80-paged": {
+      "files": [
+        "C:/path/to/Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
+        "C:/path/to/Qwen3-Coder-Next-Q4_K_M-00002-of-00004.gguf",
+        "C:/path/to/Qwen3-Coder-Next-Q4_K_M-00003-of-00004.gguf",
+        "C:/path/to/Qwen3-Coder-Next-Q4_K_M-00004-of-00004.gguf"
+      ],
+      "layer_stream": false,
+      "threads": 4,
+      "context": 2048,
+      "max_tokens": 1024,
+      "working_set_gib": 4,
+      "private_limit_gib": 6,
+      "reserve_gib": 6,
+      "request_timeout": 1200,
+      "load_timeout": 180
+    }
+  }
+}

@@ -16,6 +16,11 @@ The detailed [tensor, partition and transport guide](docs/tensors-partitions-and
 maps the Python proof and proposed native RPC path to their actual source files.
 For a bounded native CPU experiment, use the [three-node local RPC practice guide](docs/local-rpc-practice.md).
 See the [measured 4B RPC coding results and 80B partition plan](docs/benchmarks/2026-11-23-local-rpc.md).
+For a single-PC alternative, see [sequential resident-layer streaming](docs/sequential-layer-streaming.md)
+and its [4B answer-preservation / 80B smoke validation](docs/benchmarks/2026-11-23-streaming-validation.md).
+The [completed 80B coding benchmark](docs/benchmarks/2026-11-23-sequential-streaming.md)
+compares quality, explicit eviction, OS paging and a supervised repair.
+For supervised drafting and cost measurement, see [cloud supervisor + local worker](docs/cloud-supervisor-local-worker.md).
 
 From this repository, run:
 

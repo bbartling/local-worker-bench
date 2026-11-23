@@ -56,7 +56,7 @@ def historical(folder):
     raw=read_json(folder/'report.json')
     result={key:raw.get(key) for key in ('model','model_digest','threads','context','max_tokens','thinking','temperature')}
     result.update(run=folder.name,trial_date='2026-11-22',tasks=[],
-        comparability='Historical 30B trial; same synthetic prompt text, different model/tokenizer and facade. Each task includes a fresh native load; timing is not a controlled speed comparison.')
+        comparability='Historical 30B trial; same user-task specification, different model/tokenizer/facade and an additional system instruction. Each task includes a fresh native load; this is not a controlled causal comparison.')
     for task in raw['results']:
         item={key:task.get(key) for key in ('task','prompt_sha256','source_sha256','seconds','timing','done_reason')}
         item['candidate_text']=task['content'];item['prompt']=(folder/(task['task']+'.prompt.txt')).read_text(encoding='utf-8')

@@ -70,7 +70,7 @@ class OffloadTests(unittest.TestCase):
                 self.assertTrue((self.root/'.cache/local-worker-bench/inference.lock').exists())
             self.assertFalse((self.root/'.cache/local-worker-bench/offload-engine.lock').exists())
 
-    def run_fake(self,reply=None,low_after_start=False,load_error=False,limit_error=False):
+    def run_fake(self,reply=None,low_after_start=False,load_error=False,limit_error=False,private_bytes=100):
         process=FakeProcess()
         available={'available_bytes':20*memory.GIB,'available_commit_bytes':20*memory.GIB}
         low=dict(available,available_bytes=memory.GIB)
@@ -87,7 +87,7 @@ class OffloadTests(unittest.TestCase):
              patch.object(offload_api.subprocess,'Popen',return_value=process) as spawn, \
              patch.object(offload_api,'backend_request',side_effect=native), \
              patch.object(memory,'available_memory',side_effect=[available,low] if low_after_start else lambda:available), \
-             patch.object(memory,'process_memory',return_value={'rss_bytes':memory.GIB,'private_bytes':100,'page_faults':10}), \
+             patch.object(memory,'process_memory',return_value={'rss_bytes':memory.GIB,'private_bytes':private_bytes,'page_faults':10}), \
              patch.object(memory,'set_working_set_limit',side_effect=limit if limit_error else None,return_value=limit):
             try: result=self.manager.chat(self.body)
             finally:
@@ -102,8 +102,27 @@ class OffloadTests(unittest.TestCase):
         self.assertEqual(command[command.index('--load-mode')+1],'mmap')
         self.assertEqual(command[command.index('--threads')+1],'4')
 
+    def test_streaming_profile_fails_closed_without_backend_evidence(self):
+        self.config['models']['fixture']['layer_stream']=True
+        with self.assertRaisesRegex(offload_api.ApiError,'not verified'):self.run_fake()
+
+    def test_streaming_profile_accepts_verified_layer_trace(self):
+        from local_worker_bench.streaming import summarize
+        row=dict(layer=0,final=False,eviction_requests=1,unexpected_errors=0,
+            resident_samples_before=3,resident_samples_after=0)
+        summary=summarize('n_layer = 1\nLWB_STREAM '+json.dumps(row)+'\n')
+        self.config['models']['fixture']['layer_stream']=True
+        with patch.object(offload_api,'summarize_streaming',return_value=summary):
+            result,command=self.run_fake()
+        self.assertEqual(result['done_reason'],'stop')
+        self.assertEqual(command[command.index('--log-verbosity')+1],'5')
+
     def test_resource_guard_stops_owned_worker(self):
         with self.assertRaisesRegex(offload_api.ApiError,'reserve'): self.run_fake(low_after_start=True)
+
+    def test_registered_private_memory_budget_stops_owned_worker(self):
+        self.config['models']['fixture']['private_limit_gib']=1
+        with self.assertRaisesRegex(offload_api.ApiError,'private memory'):self.run_fake(private_bytes=2*memory.GIB)
 
     def test_load_timeout_stops_owned_worker(self):
         with self.assertRaisesRegex(offload_api.ApiError,'load timed out'): self.run_fake(load_error=True)

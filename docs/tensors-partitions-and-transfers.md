@@ -1,5 +1,9 @@
 # Tensors, cutting lines and transfers
 
+The later [native resident-layer experiment](sequential-layer-streaming.md)
+implements a different CPU execution path with real 80B coding measurements.
+PDF pages 20-25 explain its residency callback and hosted-supervisor workflow.
+
 The [PDF report](reports/local-ai-cluster-explained.pdf), pages 13-17, includes
 tensor illustrations, exact four-stage cuts, and sequence diagrams for both
 execution paths. Editable appendix: [cluster_report_appendix.py](../scripts/cluster_report_appendix.py).

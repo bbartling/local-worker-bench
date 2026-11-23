@@ -1,5 +1,11 @@
 # An overnight supervisor with local helpers
 
+Updated experimental path: [cloud supervisor + local worker](cloud-supervisor-local-worker.md)
+explains the 80B disk-backed API, Codex/Claude integration boundaries, checkpointing
+and cost-per-accepted-patch measurement. The outline below describes the earlier
+4B/30B routing; the current Mint host's explicit warm-model policy is documented
+in [its setup guide](linux-mint-4b-30b-setup.md), not changed by this experiment.
+
 A shell-capable Codex or Claude supervisor can select the existing API model for
 each bounded task. The current client already supports `ask --tier fast` (4B Q4)
 and `ask --tier coder` (30B Q4). The supervisor remains responsible for planning,

@@ -63,7 +63,7 @@ def api(endpoint, path, body=None, timeout=30):
 def worker_lock(name='inference.lock'):
     folder = Path.home() / '.cache' / 'local-worker-bench'
     folder.mkdir(parents=True, exist_ok=True)
-    if name not in ('inference.lock','offload-engine.lock'):
+    if name not in ('inference.lock','offload-engine.lock','paging-campaign.lock'):
         raise ValueError('Unknown worker lock.')
     path = folder / name
     try:

@@ -5,9 +5,17 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from scripts.run_paging_campaign import main
+from local_worker_bench.runner import worker_lock
 
 
 class CampaignTests(unittest.TestCase):
+    def test_campaign_lock_excludes_other_campaigns_but_allows_client_lease(self):
+        with tempfile.TemporaryDirectory() as directory,patch('local_worker_bench.runner.Path.home',return_value=Path(directory)):
+            with worker_lock('paging-campaign.lock'):
+                with self.assertRaises(ValueError):
+                    with worker_lock('paging-campaign.lock'):self.fail('Duplicate campaign admitted')
+                with worker_lock():pass
+
     def test_stop_checkpoint_starts_no_worker_and_preserves_waiting_models(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'STOP').touch()

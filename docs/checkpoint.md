@@ -83,3 +83,6 @@ Quota remained healthy at the last check. If the five-hour remaining amount
 falls below 10%, update this checkpoint, commit and stop dependent hosted work.
 No automatic quota-renewal wakeup or continuous hosted supervision is configured.
 The finite local campaign can only save work for later review.
+
+An initial launcher attempt stopped before model work because its new lock name
+was missing from the lock whitelist; that was fixed and regression-tested.

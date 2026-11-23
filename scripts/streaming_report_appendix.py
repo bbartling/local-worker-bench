@@ -125,3 +125,18 @@ def append(story,page,p,h,code,table,note,root):
     p('Compare an all-cloud baseline with hosted planning + critique + retries + integration in the hybrid workflow, at the same acceptance bar. Record provider-reported usage where available, local latency/resources, acceptance rate and review effort. Subscription quotas and API invoices differ; cloud savings were not measured in this lab. Weak local drafts can cost more to review.')
     note('“Always critiquing” means every proposed change gets review. It does not require a cloud model to watch continuously. Local generation avoids hosted drafting tokens, but review still uses hosted context and receives whatever approved code/diff is sent. Keep secrets out of both paths.')
     p('Detailed design and copyable instructions: <link href="https://github.com/bbartling/local-worker-bench/blob/main/docs/cloud-supervisor-local-worker.md" color="#087F8C">docs/cloud-supervisor-local-worker.md</link>.','SmallX')
+
+    page(26,'Linux can page model files too','The same library-and-workbench idea; different controls and accounting. Linux performance is not yet measured.')
+    p('With file-backed mmap, Linux brings needed GGUF weight pages into RAM, caches useful pages and reclaims them under pressure. Clean weights can be discarded and reread from the checkpoint. Swap is separate: file-backed weight paging does not require it, while eligible private runtime memory may use swap.')
+    table(['Windows experiment','Linux counterpart / porting work'],[
+        ('Automatic mapped-file paging','mmap plus Linux page cache and reclamation. The full checkpoint stays mapped; its weights need not all be resident.'),
+        ('Process working-set cap','cgroup v2 memory controls, with different accounting. Charged file cache and anonymous memory count; this is not the same numeric RSS cap.'),
+        ('Per-layer VirtualUnlock hook','A Linux-specific callback would need implementation and validation. madvise is a possible building block, not a tested drop-in port.')],[155,325])
+    h('Memory limits are not interchangeable')
+    p('Cgroup memory.high applies reclaim/throttling; memory.max is a hard limit that can cause an OOM kill. Swap has separate controls. A Windows 4 GiB working-set setting does not establish a Linux 4 GiB fit. Budget the runtime, cache, operating system and desktop together.')
+    h('Explicit eviction would need its own experiment')
+    p('For read-only mapped weights, MADV_DONTNEED can reduce process residency while shared file cache may remain. It is not a global cache flush. Discard advice on live private state can lose data; keep weight mappings distinct from activations and inference state.')
+    note('Only Windows was measured here. Our custom callback and resource-control harness are Windows-specific. Before claiming Linux speed or an 8 GiB fit, run the same prompts and checks, record cgroup/host memory and physical I/O, and verify cancellation and cleanup. No Linux or physical three-host disk-backed benchmark is claimed.')
+    h('Where future agents find this context')
+    p('README links to the Linux notes and benchmark; AGENTS.md directs coding agents to the memory-policy evidence and hosted-supervisor workflow. Reading those files does not authorize inference. The durable overnight queue remains proposed.')
+    p('Primary references: <link href="https://man7.org/linux/man-pages/man2/mmap.2.html" color="#087F8C">Linux mmap</link>; <link href="https://man7.org/linux/man-pages/man2/madvise.2.html" color="#087F8C">Linux madvise</link>; <link href="https://docs.kernel.org/admin-guide/cgroup-v2.html" color="#087F8C">kernel cgroup v2 documentation</link>.','SmallX')

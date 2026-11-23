@@ -21,6 +21,10 @@ and its [4B answer-preservation / 80B smoke validation](docs/benchmarks/2026-11-
 The [completed 80B coding benchmark](docs/benchmarks/2026-11-23-sequential-streaming.md)
 compares quality, explicit eviction, OS paging and a supervised repair.
 For supervised drafting and cost measurement, see [cloud supervisor + local worker](docs/cloud-supervisor-local-worker.md).
+Linux also supports [automatic file-backed paging](docs/sequential-layer-streaming.md#linux-has-equivalent-automatic-paging).
+The guide explains page cache versus swap, cgroup budgets, and why our measured
+Windows results are not Linux performance or hardware-fit claims. PDF page 26
+covers the same comparison. Coding-agent entry points are in [AGENTS.md](AGENTS.md).
 
 From this repository, run:
 

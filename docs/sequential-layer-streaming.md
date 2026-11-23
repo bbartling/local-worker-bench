@@ -36,6 +36,38 @@ This is **resident-page eviction**, not torch module deletion or unmapping the
 model. OS standby/file cache can retain pages. Process RSS is not total physical
 memory attributable to the model, and this is not isolated 8 GiB hardware.
 
+## Linux has equivalent automatic paging
+
+Linux can also run file-mapped model weights on demand: `mmap` maps the GGUF,
+and the kernel brings needed pages into RAM, caches useful pages and reclaims
+them under pressure. Clean file-backed weights can be discarded and reread
+from the checkpoint. This does not require swap; swap is a separate backing
+mechanism for eligible private/anonymous memory, including runtime allocations.
+See the [Linux mmap reference](https://man7.org/linux/man-pages/man2/mmap.2.html).
+
+| Our Windows mechanism | Linux counterpart / porting work |
+| --- | --- |
+| OS-managed file paging | `mmap` plus Linux page cache and reclamation |
+| Process working-set limit | cgroup v2 memory controls; different accounting, not an equivalent numeric cap |
+| Explicit per-layer `VirtualUnlock` callback | A Linux-specific callback would need implementation and validation; `madvise` is a possible building block |
+
+Cgroup v2 accounts for charged file cache and anonymous memory, not merely
+process RSS. `memory.high` triggers reclaim/throttling; `memory.max` is a hard
+limit that can cause an OOM kill. Swap has separate controls. Do not translate
+our Windows 4 GiB setting directly into a Linux capacity claim.
+[Kernel memory-controller documentation](https://docs.kernel.org/admin-guide/cgroup-v2.html).
+
+For read-only mapped weights, `madvise(..., MADV_DONTNEED)` is a possible
+process-residency primitive, but pages can remain in shared cache. It is not a
+global cache flush or a drop-in port of our callback. Applying discard advice
+to live private state can lose data; weight mappings and inference state must
+remain distinct. [Linux madvise reference](https://man7.org/linux/man-pages/man2/madvise.2.html).
+
+Our custom callback and resource-control harness are Windows-specific. No Linux
+80B timing, cgroup-constrained run or multi-host disk-backed result was measured
+in this lab. Validate the same prompts, grades, memory accounting, I/O and
+cleanup on Linux before comparing performance or claiming an 8 GiB fit.
+
 ## What happens for each logical decoder slice
 
 ```text

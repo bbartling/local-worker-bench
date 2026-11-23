@@ -12,6 +12,8 @@ Read the illustrated [local AI cluster report (PDF)](docs/reports/local-ai-clust
 for model basics, partitioning, API examples, request hops and hardware scenarios.
 Its editable source is [scripts/build_cluster_report.py](scripts/build_cluster_report.py)
 (requires ReportLab; rebuilding does not invoke a model).
+The detailed [tensor, partition and transport guide](docs/tensors-partitions-and-transfers.md)
+maps the Python proof and proposed native RPC path to their actual source files.
 
 From this repository, run:
 

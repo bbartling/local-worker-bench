@@ -238,10 +238,13 @@ p('Yes in the architectural sense: one serving endpoint can coordinate distribut
 p('Our comparison also needs reliability and operational requirements: scheduling, access controls, monitoring and failure recovery. Larger systems may separate those roles again. Here worker 1 intentionally combines them and is a single point of failure. Three low-RAM CPU hosts are an experiment, not a data-center performance equivalent.')
 p('[8] <link href="https://docs.vllm.ai/en/latest/serving/parallelism_scaling/" color="#087F8C">vLLM: Parallelism and Scaling</link>.','SmallX')
 
+from cluster_report_appendix import append_pages
+append_pages(story,page,p,h,code,table,note)
+
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42)
     canvas.setFont('Helvetica',8);canvas.setFillColor(NAVY)
-    canvas.drawString(54,29,'LOCAL WORKER BENCH  |  22 NOV 2026  |  EXPERIMENTAL DESIGN')
+    canvas.drawString(54,29,'LOCAL WORKER BENCH  |  UPDATED 23 NOV 2026  |  EXPERIMENTAL DESIGN')
     canvas.drawRightString(558,29,str(doc.page))
 
 if __name__=='__main__':

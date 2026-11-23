@@ -5,7 +5,7 @@ standard library only. Works on Windows and Linux. No installation step.
 
 ## Start here
 
-Cluster planning: [Raspberry Pi control plane, with no inference](docs/pi-control-plane-plan.md).
+Cluster planning: [Three-worker cluster with API on worker 1](docs/three-worker-cluster-plan.md).
 For a reusable explanation, read [llama.cpp APIs, sliced models and cluster status](docs/llama-api-and-cluster.md).
 
 Read the illustrated [local AI cluster report (PDF)](docs/reports/local-ai-cluster-explained.pdf)

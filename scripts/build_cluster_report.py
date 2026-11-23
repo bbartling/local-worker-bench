@@ -56,21 +56,19 @@ class HopDiagram(Flowable):
         def arrow(x1,y1,x2,y2):
             c.setStrokeColor(TEAL);c.line(x1,y1,x2,y2)
             c.line(x2,y2,x2-4,y2+5);c.line(x2,y2,x2+4,y2+5)
-        box(125,180,230,'CLIENT / CODING ASSISTANT','Text request and acceptance criteria')
-        box(125,115,230,'RASPBERRY PI','API + Ansible; zero inference')
-        arrow(240,180,240,159);c.setStrokeColor(TEAL);c.line(240,115,240,105);c.line(240,105,72,105);arrow(72,105,72,94)
-        box(0,50,145,'WORKER 1','Coordinator + partition A')
-        box(168,50,145,'WORKER 2','Partition B')
-        box(336,50,144,'WORKER 3','Partition C + output head*')
-        c.setStrokeColor(TEAL);pass
-        c.line(145,72,168,72);c.line(313,72,336,72)
+        box(125,180,230,'CLIENT / CODING ASSISTANT','HTTP POST /api/chat; protected connection')
+        box(20,105,440,'WORKER 1: API + CHECKPOINT SSD + LOCAL COMPUTE','gateway :11434 -> facade :11437 -> llama-server :ephemeral')
+        arrow(240,180,240,149)
+        box(0,25,215,'WORKER 2: ggml-rpc-server','RPC :50052 -> local CPU / assigned tensors')
+        box(265,25,215,'WORKER 3: ggml-rpc-server','RPC :50052 -> local CPU / assigned tensors')
+        c.setStrokeColor(TEAL);c.line(240,105,240,85);c.line(107,85,372,85)
+        arrow(107,85,107,69);arrow(372,85,372,69)
         c.setFillColor(NAVY);c.setFont('Helvetica',8)
-        c.drawString(0,25,'Activations move A -> B -> C; sampled token returns to worker 1.')
-        c.drawString(0,10,'*Illustrative layer pipeline. Actual backend placement may differ.')
+        c.drawString(0,9,'Private ggml RPC links; response returns through worker 1. Proposed topology.')
 
 page(1,'Local AI, spread across\nsmall computers','A practical guide to models, memory, APIs and an overnight coding cluster.')
 p('Prepared for Ben | 22 November 2026 | local-worker-bench','SmallX')
-note('<b>The design:</b> one Raspberry Pi manages requests and deployment. Three CPU workers perform all model computation. The Pi stores no model weights and never becomes an inference fallback.')
+note('<b>The design:</b> three CPU workers, with worker 1 hosting the application API, complete checkpoint on SSD, inference coordinator and local compute. Workers 2 and 3 expose native RPC compute. No separate controller computer is required.')
 story.append(HopDiagram())
 h('What this report helps you decide')
 p('What a model contains; how its computation can be divided; what memory and disk offload really mean; which libraries do which jobs; what our API accepts; and what happens at every request hop.')
@@ -107,20 +105,20 @@ note('Exact small-model boundary matches are useful correctness evidence. Quanti
 
 page(4,'One request, every hop','Illustrative three-stage flow. The current production-shaped facade still drives one local native process per request.')
 table(['Hop','Owner','What happens'],[
-('1. Submit','Client -> Pi','Send authenticated JSON: model alias, plain-text messages, output budget and format.'),
-('2. Admit','Pi -> worker 1','Pi checks access and forwards to a fixed worker API. Worker validates model registration and budgets. No Pi tokenization.'),
+('1. Submit','Client -> worker 1 gateway','Send authenticated JSON: model alias, plain-text messages, output budget and format.'),
+('2. Admit','Gateway -> local facade','Gateway checks access and forwards locally. The facade validates registration and budgets before native inference.'),
 ('3. Prepare','Worker 1','Apply chat template, tokenize text, allocate state and load/admit required weight partitions.'),
 ('4. Stage A','Worker 1','Embedding and early blocks transform the prompt/token. Send boundary activations to worker 2.'),
 ('5. Stage B','Worker 2','Middle blocks consume activations using their own weights and state; forward results.'),
 ('6. Stage C','Worker 3','Final blocks and output head produce token scores. Send scores or selected result back to coordinator.'),
 ('7. Repeat','Worker 1 + workers','Choose the next token. Repeat the ordered stages until stop or token limit. Keep state consistent.'),
-('8. Return','Worker 1 -> Pi -> client','Decode final text, attach timing/receipt ID, stop owned process as configured; Pi forwards the answer.'),
+('8. Return','Worker 1 -> client','Decode final text, attach timing/receipt ID, stop owned process as configured; The local gateway forwards the answer.'),
 ('9. Review','Supervisor / deterministic checks','Validate JSON, inspect candidate code, then run approved tests. Save first-pass and repair scores separately.')],[70,110,300])
 h('Saving work overnight')
-p('A proposed durable job API would accept a request and return a job ID immediately. The Pi would record state and heartbeats while workers store larger artifacts. A dropped connection need not lose a job. This queue is not implemented yet; today the call is synchronous.')
+p('A proposed durable job API would accept a request and return a job ID immediately. Worker 1 would record state and heartbeats while workers store larger artifacts. A dropped connection need not lose a job. This queue is not implemented yet; today the call is synchronous.')
 p('The small demo saves intermediate tensors for verification, recomputes prefixes and has no production KV-cache protocol. Persisting activation files is not enough to resume arbitrary token generation after a crash. Weight unloading must not discard live state that a later step requires.')
 
-page(5,'A generic API request','Use a client-side SSH tunnel to the Pi gateway, or a deliberately protected private network.')
+page(5,'A generic API request','Use a client-side SSH tunnel to the worker 1 gateway, or a deliberately protected private network.')
 p('<b>Illustrative request:</b> the alias must already exist on the compute worker. Nothing is automatically downloaded. The token below comes from the client environment, not from source control.')
 code('curl http://127.0.0.1:11434/api/chat \\\n+  -H "Authorization: Bearer $LWB_API_TOKEN" \\\n+  -H "Content-Type: application/json" \\\n+  -d \'{\n+    "model": "my-coder",\n+    "messages": [{"role": "user",\n+      "content": "Return JSON with source for add(a,b)."}],\n+    "stream": false,\n+    "think": false,\n+    "format": "json",\n+    "options": {"num_thread": 4, "num_ctx": 2048,\n+                "num_predict": 256}\n+  }\'')
 p('The shell example uses POSIX syntax. In Python, send the same object with urllib.request or requests. The repository client reads LWB_API_TOKEN to set the Bearer header. Never send secrets as part of the model prompt.')
@@ -134,8 +132,8 @@ p('message.content is text; in JSON mode, parse that text as JSON before inspect
 note('The API hides inference placement from the client. That abstraction does not mean the current single-worker engine already supports the proposed three-node partitioned execution.')
 
 page(6,'Routes and request parameters','The repository implements an Ollama-shaped subset, not the entire Ollama API [3].')
-table(['Route','Current Pi gateway behavior'],[
-('GET /health','Public local health: gateway role; inference_on_controller=false. Does not prove workers are healthy.'),
+table(['Route','Current worker 1 gateway behavior'],[
+('GET /health','Public local gateway health. Legacy inference_on_controller=false describes the gateway process, not the host, which also runs inference.'),
 ('GET /api/tags','Authenticated; lists ready registered models from the worker.'),
 ('GET /api/ps','Authenticated; reports the worker active model/process, not a cluster-wide scheduler.'),
 ('GET /api/version','Authenticated; forwards worker version/status.'),
@@ -154,11 +152,11 @@ table(['Field','Actual worker contract'],[
 p('HTTP bodies are bounded at 1 MiB. Native responses are bounded at 2 MiB. Profile settings, not request parameters, own memory limits, reserve, timeouts and weight paths. Unsupported options are rejected; this is intentionally narrower than a general serving engine.','SmallX')
 
 page(7,'Hardware: where the model fits','Slow is acceptable, but available address space is not the same as usable physical RAM.')
-table(['3 compute nodes','Initial inference budget','Candidate experiment'],[
-('8 GiB each','4 GiB each / 12 GiB total','Smaller resident baseline; explicit disk-backed partition streaming for larger weights.'),
-('16 GiB each','10 GiB each / 30 GiB total','30B Q4 candidate with measured runtime/cache headroom. 80B Q4 still needs disk backing.'),
-('32 GiB each','24 GiB each / 72 GiB total','80B Q4 capacity candidate; not a measured fit guarantee or speed promise.')],[100,150,230])
-p('These are conservative starting budgets in GiB, not measured resource limits for those machines. Worker 1 may need a smaller partition because it also coordinates inference. Advertised hardware GB and binary GiB differ. Pi memory is excluded.')
+table(['3 compute nodes','Worker 1 + 2 + 3 budget','Candidate experiment'],[
+('8 GiB each','3 + 4 + 4 / 11 GiB total','Smaller resident baseline; explicit disk-backed partition streaming for larger weights.'),
+('16 GiB each','8 + 10 + 10 / 28 GiB total','30B Q4 candidate with measured runtime/cache headroom. 80B Q4 still needs disk backing.'),
+('32 GiB each','20 + 24 + 24 / 68 GiB total','80B Q4 capacity candidate; not a measured fit guarantee or speed promise.')],[100,150,230])
+p('These are conservative starting budgets in GiB, not measured resource limits for those machines. Worker 1 may need a smaller partition because it also coordinates inference. Advertised hardware GB and binary GiB differ. Worker 1 needs extra headroom; there is no fourth controller.')
 h('Use real artifact sizes')
 p('The cached 30B Q4 file is about <b>17.28 GiB</b>. The pinned 80B Q4 download totals about <b>45.09 GiB</b>. Weight fit alone ignores activations, cache, workspace, runtime and OS reserve. Dividing a weight total by three is only a lower-level planning estimate; layer and expert sizes can be uneven.')
 h('Disk offload is possible; repeated I/O is the cost')
@@ -169,15 +167,15 @@ note('The practical sweet spot is the model with the best reviewed coding result
 
 page(8,'Libraries and deployment roles','Keep infrastructure, scheduling and tensor execution separate.')
 table(['Component','Role and limitation'],[
-('Ansible on Pi','Inventory, SSH provisioning, pinned builds, services and health checks. Does not split a model graph [4].'),
-('Pi gateway: Python stdlib','HTTP forwarding, Bearer authentication, fixed upstream, one active chat. No ML dependency or local fallback.'),
+('Ansible on worker 1/laptop','Inventory, SSH provisioning, pinned builds, services and health checks. Does not split a model graph [4].'),
+('worker 1 gateway: Python stdlib','HTTP forwarding, Bearer authentication, fixed upstream, one active chat. No ML dependency or local fallback.'),
 ('llama.cpp / ggml RPC','CPU GGUF execution and remote devices. Version/architecture support must be checked. RPC is experimental; keep it private/tunneled [2].'),
 ('PyTorch + Transformers','Our small numerical proof loads explicit layer groups and hands off tensors. Architecture-specific code, not a universal splitter.'),
 ('safetensors + psutil','Checkpoint tensor format and process/host measurements in the demo. Only trusted local artifacts should enter the custom handoff path.'),
 ('Hugging Face Accelerate','Can place/offload compatible modules across local devices/CPU/disk. Not an automatic multi-machine low-RAM cluster engine [5].'),
 ('Ray, optional','Python actors/tasks can supervise jobs or explicit stages. It does not discover a correct partition or reduce model memory by itself [6]. Not installed by our plan.')],[135,345])
 h('Ansible rollout order')
-p('<b>1.</b> Inventory three workers and a separate controller. Assert that the Pi is outside compute_workers. <b>2.</b> Install only gateway/Ansible/control files on Pi. <b>3.</b> Build pinned native binaries per worker architecture; verify model hashes and free SSD space. <b>4.</b> Establish private worker RPC and a fixed SSH API tunnel. <b>5.</b> Test a small model, budgets, cancellation and worker loss. <b>6.</b> Admit larger experiments and record receipts.')
+p('<b>1.</b> Inventory exactly three compute workers; worker 1 is also coordinator. <b>2.</b> Run Ansible from worker 1 or a developer laptop. <b>3.</b> Build compatible pinned backends on every host. <b>4.</b> Download and verify the full checkpoint on worker 1 SSD, then deploy the gateway/facade there. <b>5.</b> Configure private native RPC links and smaller worker 1 placement. <b>6.</b> Verify small-model correctness, cancellation and worker loss before larger experiments.')
 p('Use one inference job initially and four threads per worker. Do not silently change swap/pagefile settings. A local service restart must not silently replay an overnight job. TLS/VPN/SSH provides transport protection; a Bearer token over plain HTTP does not encrypt prompts.')
 note('The repo contains a deployment plan, not finished Ansible roles or a Ray cluster launcher. The current gateway has no durable queue, automatic retry, checkpoint recovery or cluster-wide resource scheduler.')
 
@@ -197,7 +195,7 @@ note('For coding delegation, the stronger assistant remains supervisor: give bou
 
 page(10,'Reference and quick-start map','Read the architecture first; treat prototypes as experiments with explicit acceptance criteria.')
 h('Repository entry points')
-for label,path in [('Pi roles, rollout and RAM scenarios','docs/pi-control-plane-plan.md'),('Experimental tool usage and caveats','docs/offload-experiments.md'),('Gateway implementation','local_worker_bench/gateway.py'),('Worker API and resource receipts','local_worker_bench/offload_api.py'),('Small-model four-process proof','examples/sharded-qwen/cluster_demo.py'),('Pinned model-download manifest','examples/offload/qwen3-coder-next-q4.download.json')]:
+for label,path in [('Worker roles, rollout and RAM scenarios','docs/three-worker-cluster-plan.md'),('Experimental tool usage and caveats','docs/offload-experiments.md'),('Gateway implementation','local_worker_bench/gateway.py'),('Worker API and resource receipts','local_worker_bench/offload_api.py'),('Small-model four-process proof','examples/sharded-qwen/cluster_demo.py'),('Pinned model-download manifest','examples/offload/qwen3-coder-next-q4.download.json')]:
     url='https://github.com/bbartling/local-worker-bench/blob/main/'+path
     p(f'<b>{label}</b><br/><link href="{url}" color="#087F8C">{path}</link>','SmallX')
 h('Primary sources checked for this report')
@@ -210,13 +208,13 @@ sources=[
 ('6. Ray actors','https://docs.ray.io/en/latest/ray-core/actors.html')]
 for label,url in sources:p(f'<b>{label}</b><br/><link href="{url}" color="#087F8C">{escape(url)}</link>','SmallX')
 h('Useful next milestone')
-p('Deploy the Pi as a forwarding-only controller. Prove an unavailable compute worker cannot start local inference there. Then run a small model through three real workers, record every boundary and failure path, and only afterward compare larger quantized coders on reviewed tasks.')
+p('Deploy the API and native coordinator on worker 1 with the full checkpoint on SSD. Measure loading peaks and reserve extra headroom there. Then verify a small model across three real workers before comparing larger coders on reviewed tasks.')
 p('Report source is scripts/build_cluster_report.py. This document describes the code at the time of writing; subsequent API changes should trigger a report rebuild. Illustrative JSON and topology are explanations, not benchmark receipts.','SmallX')
 
 page(11,'Who owns the API?','llama.cpp serves the model. Our surrounding service still owns the workflow.')
-note('<b>Yes for inference serving; not everything:</b> llama-server can provide the model HTTP API. The Pi gateway, deployment automation and proposed durable overnight jobs are separate responsibilities. Llama is a model family; llama.cpp is software that also supports other compatible model families.')
+note('<b>Yes for inference serving; not everything:</b> llama-server can provide the model HTTP API. The worker 1 gateway, deployment automation and proposed durable overnight jobs are separate responsibilities. Llama is a model family; llama.cpp is software that also supports other compatible model families.')
 table(['Layer','What we actually use or propose'],[
-('Client-facing API','Our Pi gateway exposes an authenticated Ollama-shaped /api/chat subset. It does not expose native /v1/* routes.'),
+('Client-facing API','Our worker 1 gateway exposes an authenticated Ollama-shaped /api/chat subset. It does not expose native /v1/* routes.'),
 ('Worker facade','Our /api/chat validates profiles and budgets, then starts one local native process and records resource receipts.'),
 ('Native serving','llama-server provides /v1/chat/completions internally. Upstream also supports streaming and structured JSON, subject to model/build support [7]. Our facade does not enable every upstream feature.'),
 ('Native distributed work','ggml RPC is the proposed remote-device transport. It is not wired into the current facade configuration, and is not a generic HTTP chat protocol.'),
@@ -224,9 +222,21 @@ table(['Layer','What we actually use or propose'],[
 h('Do we use mpi4py?')
 p('No. The educational proof uses HTTP/TCP between Python processes; the planned native inference path uses ggml RPC. mpi4py could transport arrays for another custom pipeline, but would not automatically partition the model or manage its cache/state. Ray is optional future job orchestration, not an installed splitter. Neither is required to make an HTTP model request.')
 h('Write this accurately')
-p('One compatible model can have computation placed across multiple workers, with one client request and one final answer. A split checkpoint is not itself a cluster deployment. Our layer-by-layer illustration explains dependencies; actual native RPC communication need not follow a direct worker-1-to-2-to-3 topology. The Pi stays outside every inference stage.')
+p('One compatible model can have computation placed across multiple workers, with one client request and one final answer. A split checkpoint is not itself a cluster deployment. Our layer-by-layer illustration explains dependencies; actual native RPC communication need not follow a direct worker-1-to-2-to-3 topology. Worker 1 hosts both the API and local inference, with a smaller model allocation.')
 p('Reusable write-up: <link href="https://github.com/bbartling/local-worker-bench/blob/main/docs/llama-api-and-cluster.md" color="#087F8C">docs/llama-api-and-cluster.md</link>','SmallX')
 p('[7] Native server reference: <link href="https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md" color="#087F8C">llama.cpp/tools/server/README.md</link>. Upstream capabilities are not a promise that our pinned prototype exposes them.','SmallX')
+
+page(12,'Installed software and call paths','Three computers. HTTP reaches worker 1; native RPC reaches the remote compute devices.')
+table(['Host','Install and role'],[
+('Worker 1','Compatible llama.cpp build: llama-server. Python gateway/facade. Complete checkpoint on SSD. Local inference plus cluster coordination.'),
+('Worker 2','Compatible llama.cpp build: ggml-rpc-server. Local CPU kernels and assigned tensors/state. Optional transfer cache on SSD.'),
+('Worker 3','Compatible llama.cpp build: ggml-rpc-server. Same remote-compute role; no separate public chat API required.')],[100,380])
+code('CLIENT\n  | HTTP POST /api/chat (protected/tunneled)\nWORKER 1: gateway :11434\n  | local HTTP POST /api/chat\nWORKER 1: facade :11437\n  | local HTTP POST /v1/chat/completions\nWORKER 1: llama-server :ephemeral + checkpoint SSD\n  | native ggml RPC             | native ggml RPC\nWORKER 2                     WORKER 3\n  ggml-rpc-server :50052        ggml-rpc-server :50052\n  CPU / assigned tensors       CPU / assigned tensors')
+p('Example install path: /opt/llama.cpp/bin/ on Linux, built for each host architecture with RPC support. Example checkpoint location: /srv/local-worker/models/ on worker 1. Ports are illustrative; remote RPC must be private/tunneled. This topology remains proposed: the current facade is local-only and needs a verified RPC placement profile.')
+h('Do enterprise data centers do something similar?')
+p('Yes in the architectural sense: one serving endpoint can coordinate distributed model work. vLLM documents tensor/pipeline parallel serving and multi-node execution, including Ray as a distributed runtime [8]. That does not mean enterprise systems use our code or llama.cpp RPC.')
+p('Our comparison also needs reliability and operational requirements: scheduling, access controls, monitoring and failure recovery. Larger systems may separate those roles again. Here worker 1 intentionally combines them and is a single point of failure. Three low-RAM CPU hosts are an experiment, not a data-center performance equivalent.')
+p('[8] <link href="https://docs.vllm.ai/en/latest/serving/parallelism_scaling/" color="#087F8C">vLLM: Parallelism and Scaling</link>.','SmallX')
 
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42)
@@ -237,6 +247,6 @@ def footer(canvas,doc):
 if __name__=='__main__':
     OUT.parent.mkdir(parents=True,exist_ok=True)
     doc=SimpleDocTemplate(str(OUT),pagesize=(612,792),rightMargin=54,leftMargin=54,topMargin=45,bottomMargin=57,
-        title='Local AI Cluster Explained',author='Local Worker Bench',subject='Pi control plane, CPU model partitions and API request flow')
+        title='Local AI Cluster Explained',author='Local Worker Bench',subject='Three CPU workers, model serving and API request flow')
     doc.build(story,onFirstPage=footer,onLaterPages=footer)
     print(OUT)

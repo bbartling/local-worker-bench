@@ -1,7 +1,9 @@
-"""Pi-friendly authenticated API gateway. HTTP forwarding only, no inference.
+"""Host-independent authenticated API gateway. HTTP forwarding only, no inference.
 
-The upstream is fixed at startup (normally an SSH tunnel to a compute worker).
+The upstream is fixed at startup (normally the local worker facade on worker 1).
 This module never spawns a process, downloads weights, or imports an ML runtime.
+Other processes on the same host can perform inference; legacy response fields
+named controller_inference refer only to this forwarding component.
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import ipaddress

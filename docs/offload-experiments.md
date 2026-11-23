@@ -1,7 +1,7 @@
 # Experimental CPU offload tools
 
-These tools are opt-in research prototypes. The Pi placement and three-worker
-deployment TODO are in [the control-plane plan](pi-control-plane-plan.md).
+These tools are opt-in research prototypes. The worker placement and three-worker
+deployment TODO are in [the control-plane plan](three-worker-cluster-plan.md).
 The [API and cluster write-up](llama-api-and-cluster.md) explains the native
 server, our facade, RPC, and why mpi4py is not used.
 No physical three-machine cluster or large-model quality improvement is claimed.
@@ -17,7 +17,7 @@ No physical three-machine cluster or large-model quality improvement is claimed.
   Build provenance and binaries go under ignored `results/`.
 - `serve-offload`: loopback Ollama API subset; one owned native worker per
   request, resource receipts, timeout, cancellation and process cleanup.
-- `serve-gateway`: lightweight authenticated forwarding for a Pi; never loads
+- `serve-gateway`: lightweight authenticated forwarding on worker 1; never loads
   weights or launches inference. See the control-plane plan for its limitations.
 - `examples/sharded-qwen/demo.py`: four sequential layer groups of Qwen3-0.6B,
   independently loaded and released, compared against an unpartitioned reference.

@@ -1,0 +1,169 @@
+{
+  "plan_only": true,
+  "inference_started": false,
+  "physical_cluster_tested": false,
+  "total_artifact_bytes": 48410992032,
+  "total_tensor_span_bytes": 48405005312,
+  "block_count": 48,
+  "cut_after_zero_based_layers": [
+    15,
+    31
+  ],
+  "groups": [
+    {
+      "worker": 1,
+      "layers": [
+        0,
+        15
+      ],
+      "serialized_span_bytes": 16305284096,
+      "weights_gib": 15.185479164123535
+    },
+    {
+      "worker": 2,
+      "layers": [
+        16,
+        31
+      ],
+      "serialized_span_bytes": 15575794688,
+      "weights_gib": 14.506089210510254
+    },
+    {
+      "worker": 3,
+      "layers": [
+        32,
+        47
+      ],
+      "serialized_span_bytes": 16523926528,
+      "weights_gib": 15.389105796813965
+    }
+  ],
+  "planning_budget_checks": [
+    {
+      "physical_gib_per_host": 8,
+      "inference_budgets_gib": [
+        3,
+        4,
+        4
+      ],
+      "serialized_weights_within_budgets": false,
+      "runtime_fit_verified": false
+    },
+    {
+      "physical_gib_per_host": 16,
+      "inference_budgets_gib": [
+        8,
+        10,
+        10
+      ],
+      "serialized_weights_within_budgets": false,
+      "runtime_fit_verified": false
+    },
+    {
+      "physical_gib_per_host": 32,
+      "inference_budgets_gib": [
+        20,
+        24,
+        24
+      ],
+      "serialized_weights_within_budgets": true,
+      "runtime_fit_verified": false
+    }
+  ],
+  "per_layer_span_bytes": {
+    "20": 1069716224,
+    "3": 1066244096,
+    "39": 927291392,
+    "14": 1069716224,
+    "9": 931033856,
+    "34": 931033856,
+    "35": 1065973760,
+    "32": 1069716224,
+    "44": 1069716224,
+    "43": 1066244096,
+    "22": 931033856,
+    "4": 1069716224,
+    "15": 927291392,
+    "8": 1069716224,
+    "11": 1065973760,
+    "0": 1069716224,
+    "1": 1069716224,
+    "37": 931033856,
+    "5": 1069716224,
+    "38": 1069716224,
+    "42": 1069716224,
+    "23": 1066244096,
+    "24": 931033856,
+    "21": 931033856,
+    "33": 931033856,
+    "25": 931033856,
+    "45": 1069716224,
+    "17": 1069716224,
+    "18": 931033856,
+    "31": 927291392,
+    "16": 931033856,
+    "28": 931033856,
+    "46": 1069716224,
+    "47": 1065973760,
+    "29": 1069716224,
+    "30": 931033856,
+    "36": 931033856,
+    "19": 927561728,
+    "6": 931033856,
+    "7": 927561728,
+    "27": 927561728,
+    "40": 931033856,
+    "41": 1069716224,
+    "12": 931033856,
+    "13": 931033856,
+    "2": 1069716224,
+    "26": 1069716224,
+    "10": 931033856
+  },
+  "embedding_span_bytes": 175030272,
+  "other_output_span_bytes": 255260672,
+  "largest_tensor": {
+    "name": "blk.43.ffn_down_exps.weight",
+    "shape": [
+      512,
+      2048,
+      512
+    ],
+    "ggml_type": 14,
+    "serialized_span_bytes": 440401920
+  },
+  "caveats": [
+    "Contiguous 3-way storage balance only; not actual native device assignment.",
+    "Embedding assigned to worker 1; all non-block non-embedding tensors assigned to worker 3.",
+    "Runtime/cache/workspace/OS reserves are extra; worker 1 needs extra coordination space.",
+    "Does not provide file-backed RPC allocations or make 80B resident in 32 GiB."
+  ],
+  "artifact": {
+    "model": "qwen3-coder-next:q4_K_M",
+    "repo": "Qwen/Qwen3-Coder-Next-GGUF",
+    "revision": "b82fb7382639d97b38fa7672e526c760c2fb358e",
+    "all_sha256_verified": true,
+    "files": [
+      {
+        "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
+        "bytes": 15524827040,
+        "sha256": "6bcfc9f9c37901eeb92172e2ab871224dab36a453d263bcb2547f737409534da"
+      },
+      {
+        "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00002-of-00004.gguf",
+        "bytes": 14872168352,
+        "sha256": "817def0691ee9d08bf3dc4444be7aed29c9e52091e8fa9d97901ce7e7f6f01d3"
+      },
+      {
+        "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00003-of-00004.gguf",
+        "bytes": 14503294496,
+        "sha256": "23aa634d47dca9b4ca3ea249384e6f01951b24c83cdc076f37f6f43d6c99883f"
+      },
+      {
+        "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00004-of-00004.gguf",
+        "bytes": 3510702144,
+        "sha256": "249c768cc5f130dc731567d6edcbdacc48e14dec9e02c5dbe2b2185d2c5bdb2b"
+      }
+    ]
+  }
+}

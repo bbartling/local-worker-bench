@@ -131,3 +131,53 @@ def append_pages(story,page,p,h,code,table,note):
     p('Choose one execution path. For native RPC, enumerate devices, reserve worker 1 overhead, register explicit remote placement, inspect actual layer assignments and measure each host. For a custom Python pipeline, generalize all four-stage assumptions, design cache ownership and transport, and re-run boundary/logit comparisons. These are different engineering tasks.')
     p('A robust record should include model/config hash, layer ownership, actual weight bytes per host, dtype, context, token position, shape, transferred bytes and first-pass quality. Exercise cancellation and missing-worker failures. Never call the three-node cluster verified just because the single-host four-stage reference passed.')
     note('Memory release is also path-specific: demo.py fresh stage processes exit; the HTTP nodes persist and allocators/OS cache may retain memory; the native facade owns one worker process per request. None of these facts alone proves strict total physical-RAM bounds on three computers.')
+
+
+class TimingBars(Flowable):
+    def __init__(self,items):
+        super().__init__();self.items=items;self.width=480;self.height=25+len(items)*23
+    def draw(self):
+        c=self.canv;maximum=max(value for _,value in self.items)
+        for i,(label,value) in enumerate(self.items):
+            y=self.height-23-i*23
+            c.setFillColor(colors.HexColor('#132C42'));c.setFont('Helvetica',8)
+            c.drawString(0,y+4,label)
+            c.setFillColor(colors.HexColor('#087F8C'));c.rect(145,y,270*value/maximum,14,fill=1,stroke=0)
+            c.setFillColor(colors.HexColor('#132C42'));c.drawString(420,y+4,f'{value:.1f}s')
+
+
+def append_practice_results(story,page,p,h,code,table,note,root):
+    import json
+    evidence=json.loads((root/'docs/benchmarks/data/2026-11-23-4b-local-rpc.json').read_text(encoding='utf-8'))
+    runs=[run for run in evidence['runs'] if any(t['task']!='smoke' for t in run['tasks'])]
+    def label(run):
+        return 'RPC 3 x 1t' if run['mode']=='rpc' else ('Single 1t' if run['thread_budget'].startswith('1 ') else 'Single 4t')
+    page(18,'Measured 4B coding practice','23 November 2026: real native RPC on this PC. First-pass quality and execution cost are separate results.')
+    rows=[];bars=[]
+    for run in runs:
+        for task in run['tasks']:
+            grade=task.get('grade',{})
+            rows.append([label(run),task['task'],f"{grade.get('passed','?')}/{grade.get('total','?')}",
+                f"{task['seconds']:.1f}s",f"{task['timings']['predicted_per_second']:.2f}"])
+            bars.append((label(run)+' / '+task['task'],task['seconds']))
+    table(['Configuration','Task','Tests','Wall time','Gen tok/s'],rows,[105,75,75,105,120])
+    story.append(TimingBars(bars))
+    p('Same cached Qwen3.5 4B, same synthetic task prompts, 2048 context, up to 1024 output tokens, JSON format, greedy/non-thinking generation. A run loads once and serves its tasks in order. Code was inspected before the independent hash-gated checker. No repairs are folded into first-pass scores.')
+    note('Three RPC CPU devices completed real graph work, but the host and OS cache are shared. This is not three physical 8 GiB machines. A score counts narrow fixtures, including invalid-input cases; it is not an autonomous coding qualification.')
+    p('The one-thread single-process motor control produced exactly the same source hash as RPC, at the same 34/49 score. RPC took 14.3% longer. This supports a threading/numerical explanation for the four-thread text difference on this case, not universal equivalence. Timing gaps are not pure network-overhead measurements.')
+    p('Historical 30B first pass: motor 49/49, elapsed 39/46 (88/95). These stronger grades come from saved source, reviewed and checked now; its separate cold-load timings are not a controlled speed comparison.')
+    p('Full synthetic prompts, candidates, test failures, hashes, timings, placement and resource samples: <link href="https://github.com/bbartling/local-worker-bench/blob/main/docs/benchmarks/data/2026-11-23-4b-local-rpc.json" color="#087F8C">public benchmark evidence</link>. See the companion benchmark for load/memory details.','SmallX')
+
+    plan=json.loads((root/'docs/benchmarks/data/2026-11-23-80b-partition-plan.json').read_text(encoding='utf-8'))
+    page(19,'80B: real weight sizes, not a fit claim','The full 48.41 decimal-GB checkpoint is downloaded. Header inspection can plan cuts without loading tensor data.')
+    table(['Proposed group','Decoder layers','Weight spans'],[
+        [f"Worker {g['worker']}",f"{g['layers'][0]}-{g['layers'][1]}",f"{g['weights_gib']:.2f} GiB"] for g in plan['groups']],[130,160,190])
+    p('scripts/plan_gguf_partitions.py inspects the four GGUF headers, groups tensor spans by decoder block, assigns embedding to the first group and remaining output tensors to the last, then searches contiguous three-way cuts minimizing the largest serialized group. It reads metadata, not full tensor payloads, and does not rewrite the model.')
+    h('Why 48.41 / 3 is not a memory budget')
+    p('The division gives about 16.14 decimal GB of storage per group on average. Actual groups above differ and include padding. Runtime buffers, caches, OS space and coordinator overhead are extra. Three simulated nodes on this PC still share only 32 GiB physical RAM; they do not create additional capacity.')
+    table(['Physical RAM per host','Proposed inference budgets','Weight-only result'],[
+        [f"{r['physical_gib_per_host']} GiB",' / '.join(str(v) for v in r['inference_budgets_gib'])+' GiB',
+            'Within budgets; runtime unverified' if r['serialized_weights_within_budgets'] else 'Exceeds budgets'] for r in plan['planning_budget_checks']],[130,160,190])
+    note('80B inference was not launched by this practice harness. Its <=6 GiB model-file admission guard prevents accidental escalation. Stock RPC allocation does not supply our proposed disk-backed layer streaming. Closing apps cannot make 45.09 GiB of weights fully resident in a 32 GiB host.')
+    h('Next milestone')
+    p('Either validate resident RPC on three higher-memory computers, or build and verify explicit disk-backed execution with measured global memory, I/O and cleanup. Passing small-model plumbing and coding tests is necessary evidence, not proof that a larger hybrid MoE model will fit or improve quality.')

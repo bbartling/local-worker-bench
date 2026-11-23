@@ -187,9 +187,9 @@ table(['Model situation','What to expect'],[
 ('Quantized checkpoint','Engine must understand both the architecture and exact quantization format. A GGUF extension alone is not a compatibility guarantee.'),
 ('Hosted proprietary model','No local checkpoint means we cannot partition its weights. We can route API calls to it, which is a different operation.')],[140,340])
 h('Evidence we have versus work still ahead')
-p('<b>Verified engineering checks:</b> 52 repository tests passed, plus 95 deterministic fixture controls. These offline checks do not establish that a model solved 95 tasks. Gateway tests use a fake upstream, including unavailable-worker behavior.')
+p('<b>Verified engineering checks:</b> 56 repository tests passed, plus 95 deterministic fixture controls. These offline checks do not establish that a model solved 95 tasks. Gateway tests use a fake upstream, including unavailable-worker behavior.')
 p('<b>Small-model proof:</b> Qwen3-0.6B split over four local TCP processes matched eight FP64 stage boundaries and two greedy token results against its reference. It is not a three-physical-node or coding-quality result.')
-p('<b>Bounded 30B run:</b> the rebuilt single-worker backend completed HTTP, motor, elapsed and import generations with four threads / 2048 context. HTTP matched the expected verdict; the reviewed motor candidate passed 49/49. Other outputs are not claimed scored here. A prior bundled-backend load failed the desktop memory reserve; that failure matters.')
+p('<b>Bounded 30B run:</b> the rebuilt single-worker backend completed HTTP, motor, elapsed and import generations with four threads / 2048 context. HTTP matched the verdict; reviewed motor scored 49/49 and elapsed 39/46 first pass. Import is ungraded. A prior bundled-backend load failed the desktop reserve; that failure matters.')
 p('<b>Not established:</b> an 80B quality win, a physical three-node memory/speed result, durable overnight jobs, or a universal model slicer. The next useful test is three-node correctness on a small model, then identical reviewed coding tasks under each hardware budget.')
 note('For coding delegation, the stronger assistant remains supervisor: give bounded context, require a candidate, inspect it, run independent checks, and preserve failed first attempts. A valid HTTP 200 or fluent explanation is not a correct patch.')
 
@@ -238,8 +238,9 @@ p('Yes in the architectural sense: one serving endpoint can coordinate distribut
 p('Our comparison also needs reliability and operational requirements: scheduling, access controls, monitoring and failure recovery. Larger systems may separate those roles again. Here worker 1 intentionally combines them and is a single point of failure. Three low-RAM CPU hosts are an experiment, not a data-center performance equivalent.')
 p('[8] <link href="https://docs.vllm.ai/en/latest/serving/parallelism_scaling/" color="#087F8C">vLLM: Parallelism and Scaling</link>.','SmallX')
 
-from cluster_report_appendix import append_pages
+from cluster_report_appendix import append_pages, append_practice_results
 append_pages(story,page,p,h,code,table,note)
+append_practice_results(story,page,p,h,code,table,note,ROOT)
 
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42)

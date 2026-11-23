@@ -14,6 +14,8 @@ Its editable source is [scripts/build_cluster_report.py](scripts/build_cluster_r
 (requires ReportLab; rebuilding does not invoke a model).
 The detailed [tensor, partition and transport guide](docs/tensors-partitions-and-transfers.md)
 maps the Python proof and proposed native RPC path to their actual source files.
+For a bounded native CPU experiment, use the [three-node local RPC practice guide](docs/local-rpc-practice.md).
+See the [measured 4B RPC coding results and 80B partition plan](docs/benchmarks/2026-11-23-local-rpc.md).
 
 From this repository, run:
 

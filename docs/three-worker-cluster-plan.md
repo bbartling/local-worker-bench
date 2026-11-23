@@ -1,6 +1,8 @@
 # Three-worker CPU cluster: API and coordinator on worker 1
 
 Status: deployment plan, not a deployed or measured physical cluster.
+We have now [measured three local native RPC devices](benchmarks/2026-11-23-local-rpc.md)
+on one PC with the cached 4B model. This does not establish physical-node isolation.
 This replaces the separate-controller design. There are three computers total.
 See [API ownership and model splitting](llama-api-and-cluster.md) for the reusable write-up.
 

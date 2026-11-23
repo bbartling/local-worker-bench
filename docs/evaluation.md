@@ -33,6 +33,45 @@ Full prior prompts, sources, failures, native timing, resource samples and hashe
 retained there too: expected-layer logging was missing, the API failed closed,
 then passed after verbosity was enabled. Explicit eviction is now research only.
 
+## Fresh automatic-budget / task-packet trial
+
+| Task | First-pass grade | Client wall | Prompt / output tokens |
+| --- | ---: | ---: | ---: |
+| Compact patch | 25/25 | 246.258 s | 336 / 34 |
+| Motor | 47/49 | 501.269 s | 493 / 361 |
+| Elapsed | 46/46 | 893.342 s | 553 / 827 |
+| Motor, one targeted local repair | 49/49 | 233.067 s | 230 / 61 |
+
+The broader total is **93/95 first pass; 95/95 after one local repair**. Keep the
+25-case compact patch separate. Admission working-set budgets were 9.71-9.82 GiB;
+host available RAM stayed above 4.30 GiB in those three first-pass requests. All
+owned workers exited. These are observed process/host counters, not total model
+physical-memory attribution or a desktop responsiveness guarantee.
+
+The motor packet explicitly required validating every selected item before
+deciding. The draft still returned ACTIVE before encountering a later invalid
+item in `[True, "bad"]`. The supervisor withheld acceptance, sent those failures
+and only the offending block, inspected the local replacement, applied it to the
+pinned disposable source, and reran checks. No supervisor rewrite was counted
+as model success. Clear prompts help; they do not remove the need for tests.
+
+Compared with prior 87/95, this run changed prompt information, helper-system
+context and RAM budget. Downloads were concurrent. It is not a controlled
+prompt-only ablation or proof that a larger working set is faster. The remaining
+baseline-versus-packet study must match conditions and repeat trials.
+
+The fresh API context probe rejected 1209 prompt tokens plus 1024 output allowance
+and a 64-token template margin against 2048 context with HTTP 413, before generation;
+the worker exited. The valid repair passed preflight at 230 + 256 + 64.
+First-pass requests began before the new context-preflight code was enabled;
+the separate repair and overflow probe exercised the updated API.
+
+Full prompts, answers, grades/failures, hashes, actual budgets, native timings,
+cleanup, repair and context evidence are in
+`benchmarks/data/2026-11-23-paging-packets.json`. The actual backend executable
+and DLL provenance is included. The ledger accepted patch/elapsed and withheld
+the failing first motor candidate.
+
 ## New model/precision matrix
 
 The existing 80B Q4 **is already Qwen3-Coder-Next**; it is not a third independent

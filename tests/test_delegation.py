@@ -23,6 +23,14 @@ class DelegationTests(unittest.TestCase):
             with self.assertRaises(ValueError):store.claim(job)
             store.finish(job,{'error':'cancelled'},'failed');store.close()
 
+    def test_missing_context_is_a_checkpoint_not_accepted_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store=JobStore(Path(directory)/'jobs.sqlite');job=store.submit(self.packet());store.claim(job)
+            store.finish(job,{'needs_context':'Which return type?'},'needs_context')
+            self.assertEqual(store.get(job)['state'],'needs_context')
+            with self.assertRaises(ValueError):store.claim(job)
+            store.close()
+
     def test_acceptance_requires_same_candidate_revision_and_passing_checks(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);source=root/'candidate.py';source.write_bytes(b'def x(): return True\n')

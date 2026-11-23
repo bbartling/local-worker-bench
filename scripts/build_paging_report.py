@@ -130,8 +130,11 @@ if new.exists():
     d=json.loads(new.read_text());rows=[]
     for run in d['runs']:
         for task in run['tasks']:
-            g=task.get('grade',{});rows.append([task['task'],f"{g.get('passed','?')}/{g.get('total','?')}",f"{task['seconds']:.1f} s"])
+            g=task.get('grade',{});score=f"{g['passed']}/{g['total']}" if g else 'Not graded'
+            rows.append([task['task'],score,f"{task['seconds']:.1f} s"])
     if rows:table(['New packet task','Reviewed grade','Client wall'],rows,[240,125,115])
+    repair=d.get('supervised_repair')
+    if repair:p(f"<b>Fresh supervised repair:</b> motor {repair['first_pass_grade']['passed']}/49 became {repair['grade']['passed']}/49 after one local block replacement and independent checks. Broader total: 93/95 first pass, 95/95 after repair. The compact patch stays separate.")
 else:p('Fresh packet grades are pending. Downloaded, running, generated and independently graded are distinct milestones; no pending model receives a quality score.')
 h('What each receipt should preserve')
 p('Prompt/candidate hashes, model/backend revision, startup and prompt/generation time, output tokens, truncation, memory budget, resource peaks, failed cases and worker cleanup. Test the supervisor too: scope, contract completeness, missing context, retry limits and correct acceptance.')
@@ -158,6 +161,7 @@ table(['Platform / component','What exists and what needs validation'],[
 p('Linux cgroups account for charged cache and anonymous memory, unlike a Windows process working-set cap. Linux needs its own constrained tests and whole-host accounting. Model file paging is separate from swap. Native Linux may be preferable on a dedicated worker; WSL is not assumed faster on this desktop.')
 h('Several days means checkpoints, not an endless call')
 p('Each request has a finite timeout and stops for review. Save source revision, packet, candidate, tests, model/backend and next action. A deterministic dispatcher can wait without cloud polling. Hosted-session wakeup, leases, reboot recovery and automatic review handoff are not implemented. Never auto-merge drafts.')
+p('A separately launched, finite campaign can wait up to 48 hours for verified downloads, smoke-test each model and save bounded drafts once per model. It owns its API and stops at review. A STOP file requests cancellation; it never executes or accepts candidate code.')
 p('At low observable quota, commit a precise checkpoint before stopping dependent work. Downloads can finish independently; a Markdown file cannot renew usage or keep a hosted agent alive. Check docs/checkpoint.md for actual running jobs and remaining phases.')
 note('Measure hosted cost per accepted patch, including planning, critique and retries. Cloud savings are a hypothesis, not a measured result here. Slow CPU work is acceptable when its accepted output is worthwhile; persistent wrong output is not progress.')
 p('Primary Linux reference: docs.kernel.org/admin-guide/cgroup-v2.html. Active notes: docs/guide.md, docs/agent-guide.md and docs/evaluation.md. Historical cluster material is research context only.','SmallP')

@@ -55,7 +55,7 @@ class JobStore:
         return self.get(job_id)
 
     def finish(self,job_id,receipt,state='needs_review'):
-        if state not in ('needs_review','failed'):raise ValueError('Drafting can only stop for review or failure')
+        if state not in ('needs_review','needs_context','failed'):raise ValueError('Drafting can only stop for review, context or failure')
         cursor=self.db.execute('UPDATE jobs SET state=?,receipt=?,updated=? WHERE id=? AND state=\'drafting\'',
             (state,json.dumps(receipt),time.time(),job_id));self.db.commit()
         if cursor.rowcount!=1:raise ValueError('Job is not drafting')

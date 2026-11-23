@@ -41,6 +41,10 @@ if __name__=='__main__':
                 timeout=args.timeout,thinking='off',response_format='json'))==0
             result=json.loads(target.read_text(encoding='utf-8'))
             source=result.get('answer',{}).get('source')
+            missing=result.get('answer',{}).get('needs_context')
+            if ok and isinstance(missing,str) and missing.strip():
+                store.finish(job_id,{'needs_context':missing,'candidate_file':target.name},'needs_context')
+                print(json.dumps({'job':job_id,'state':'needs_context'}),flush=True);break
             if ok and isinstance(source,str):
                 raw=source.encode();(args.output/(task+'.py')).write_bytes(raw)
                 receipt={'candidate_sha256':hashlib.sha256(raw).hexdigest(),'resource_receipt':result.get('resource_receipt'),

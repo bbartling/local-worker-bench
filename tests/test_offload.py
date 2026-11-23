@@ -39,6 +39,11 @@ class OffloadTests(unittest.TestCase):
         p=self.config['models']['fixture']; self.assertEqual(p['threads'],4); self.assertEqual(p['context'],2048)
         self.assertTrue(offload_api.files_ready(p))
 
+    def test_sampler_settings_are_not_silently_ignored(self):
+        for options in ({'temperature':.8},{'temperature':True},{'seed':42},{'repeat_penalty':1.2}):
+            with self.subTest(options=options),self.assertRaises(offload_api.ApiError):
+                offload_api.validate_chat(dict(self.body,options=options),self.config['models'])
+
     def test_request_budgets_and_no_tools(self):
         invalid=[{'stream':True},{'options':{'num_thread':8}},{'options':{'num_ctx':8192}},
                  {'options':{'num_predict':1025}},{'tools':[]},{'think':True},
@@ -106,7 +111,8 @@ class OffloadTests(unittest.TestCase):
 
     def test_context_admission_preserves_output_room(self):
         self.config['models']['fixture']['validate_context']=True
-        self.run_fake()
+        _,command=self.run_fake()
+        self.assertIn('--no-context-shift',command)
         receipt=json.loads(next((self.root/'receipts').glob('*/receipt.json')).read_text())
         self.assertEqual(receipt['context_admission']['prompt_tokens'],5)
 

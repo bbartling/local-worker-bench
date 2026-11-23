@@ -27,8 +27,14 @@ python scripts/draft_job.py --packet examples/paging/task.packet.json --model qw
 Replace the example source revision before project use. The endpoint defaults to
 loopback port 11438 and must already be running. One authorized invocation makes
 one bounded call, saves the prompt and candidate, unloads, and stops at review.
-It never applies source or runs tests. `jobs.sqlite` records queued -> drafting ->
-needs_review (or failed). `JobStore` can inspect state and record a decision with
+It never applies source or runs tests.
+Default output is 512 tokens; use `--max-tokens` from 64 through 1024 when the
+registered server permits it. Smaller edits need less output and leave more
+context room. The native profile also disables context shifting.
+
+`jobs.sqlite` records queued -> drafting -> needs_review (or needs_context/failed).
+A missing-context reply stops without creating source or being counted as an
+accepted patch. `JobStore` can inspect state and record a decision with
 matching source/check hashes and the same base revision. A claimed job cannot be
 automatically replayed after a crash. Preserve it for supervisor disposition.
 
@@ -76,6 +82,16 @@ review checkpoints; never automatically merge a local draft. The current SQLite
 ledger provides durable checkpoints, not a full unattended multi-day scheduler.
 Campaign leases, automatic handoff, hosted-session recovery and `/jobs/*` remain
 future work. Local API calls are synchronous and bounded to 30 minutes.
+
+An explicitly launched `scripts/run_paging_campaign.py` can wait up to 48 hours
+for the three pinned new-model downloads, own a loopback API, run smoke and
+bounded serial drafting once per model, then stop at review. It never executes
+candidate code. Campaign state is persisted before claims, and claimed work is
+not replayed on restart. This is a finite drafting campaign, not hosted critique
+or unattended patch acceptance. No model work starts merely from downloading.
+Create `STOP` in its output directory to request cancellation and prevent new
+claims; normal shutdown stops owned workers. After a hard process kill, inspect
+API/native processes and the ledger before restarting rather than deleting locks.
 
 If usage limits are observable, inspect them at milestones. On less than 10%
 remaining, commit a checkpoint with exact running download/job IDs and restart

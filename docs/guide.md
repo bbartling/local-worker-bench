@@ -61,12 +61,18 @@ Send that body to `POST http://127.0.0.1:11438/api/chat`. `GET /health`,
 The facade starts/stops an owned native process per request; replies include
 timings and a `resource_receipt` ID. It refuses tools, images, streaming and
 unregistered models. There are no public `/jobs/*` or agent-provider routes.
+Supported generation options are `num_thread`, `num_ctx`, `num_predict` and
+`temperature:0`. Threads/context must match the profile; only the output allowance
+can be reduced per call. Other sampler settings are rejected, not silently ignored.
 
 **We are not writing an inference engine from scratch.** llama.cpp runs the
 model; our small API handles profiles, budgets, receipts and lifecycle. The
 Ollama-shaped subset keeps existing helper clients useful. This does not make
 it stock Ollama, a complete Ollama implementation, or a direct Claude/Codex
 provider replacement. Keep the hosted model as supervisor and call the helper.
+The supervisor needs a shell on this PC or an authorized private connection.
+A cloud container's `127.0.0.1` points to that container, not this computer.
+This setup opens no public listener, tunnel or firewall rule.
 
 Stock Ollama supports GGUF imports, but import alone does not install our owned
 process budget/watchdog policy. Its scheduler/backend behavior is version-specific;

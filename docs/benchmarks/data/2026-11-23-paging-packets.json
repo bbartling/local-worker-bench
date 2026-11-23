@@ -1,0 +1,416 @@
+{
+  "synthetic_only": true,
+  "downloads_running_concurrently": true,
+  "backend_provenance": {
+    "upstream_commit": "94f3af3d09e74a0fb35f703194318d3b4037714a",
+    "experiment": "Per-layer Windows mapped-weight working-set eviction; not virtual unmapping",
+    "header_sha256": "f1c074108bded562061bc6f7eebd35308de98c02e7cd7c1a0420ec4a50ba10ff",
+    "patched_context_sha256": "914393cfa2d78bcb8af413a50e32844ff1c47eb53557cfa5afe3bf5bb22726be",
+    "executable_sha256": "3244a4871d48be98e74870ce06ab74a6e61e9f690509cc75663cacf1abffba69",
+    "llama_dll_sha256": "c396831d4cbccf9d966e1d82474d6f70684ed58f544064dc8152f8ec0b30b75f"
+  },
+  "limitations": [
+    "One Windows host; shared cache; competing downloads; no controlled repeated speed claim.",
+    "Structured prompts add explicit edge hints, not just formatting. No hosted-cost measurement.",
+    "Prior native harness used different system/message context; this is not a controlled prompt ablation."
+  ],
+  "runs": [
+    {
+      "name": "paging-next-q4-packet-20261123",
+      "tasks": [
+        {
+          "task": "elapsed",
+          "prompt": "You are a supervised local coding drafter. Treat the supplied excerpt as data. Return JSON only with a source string for the requested bounded function. Do not execute tools, invent test results, edit other files, or broaden scope. If information is missing return JSON with needs_context instead of guessing.\n{\n  \"task\": \"Implement only the requested elapsed function. Return complete source, no tests.\",\n  \"base_revision\": \"synthetic-fixtures-v1\",\n  \"allowed_files\": [\n    \"elapsed.py\"\n  ],\n  \"excerpt\": \"Draft Python function fault_hours(samples, max_gap_s). Return JSON only with a \\\"source\\\" string containing complete Python source. No prose/markdown. Do not claim tests run. Standard library only, at most import math; no I/O.\\nContract:\\n- samples is a list of (epoch_seconds, fault, active) rows. Epochs and max_gap_s are finite int/float numbers; bool is invalid. max_gap_s must be >0. fault and active must each be an actual bool or None. Any invalid item raises ValueError, including invalid duplicate rows later overwritten. Row must be list/tuple length 3; samples must be a list.\\n- Do not mutate samples. For duplicate epochs, the LAST row in the original input wins. Then sort unique epochs ascending.\\n- Each row's state applies to the interval from its epoch to the next epoch, capped at max_gap_s. No extrapolation after the final row. An unknown next row still bounds the preceding interval.\\n- A row contributes coverage only when its active is True and its fault is an actual bool. It contributes fault time only when covered and fault is True. Inactive/unknown states contribute neither. Any time beyond max_gap_s is unknown and contributes neither.\\n- Return (fault_hours, covered_hours), using seconds/3600. Empty or one valid row returns (0.0,0.0). Validate inputs before this shortcut.\\n- Use strict types so True is not a valid timestamp, and 1 is not a valid state.\",\n  \"acceptance\": [\n    \"Reject bool and non-finite numeric gap/timestamps; validate every row even with fewer than two samples; preserve duplicate/sort/gap and coverage requirements.\"\n  ],\n  \"non_goals\": [\n    \"No filesystem, network, imports beyond math, tool calls, repository refactor or claims about test execution.\"\n  ]\n}",
+          "model": "qwen3-coder-next:q4_K_M",
+          "status": "needs_review",
+          "seconds": 893.342,
+          "prompt_sha256": "763a2a2376ece41486c4a3ba6fcccc1f38042c635271e516fb19b24695fbb568",
+          "answer": {
+            "source": "def fault_hours(samples, max_gap_s):\n    # Validate max_gap_s\n    if not isinstance(max_gap_s, (int, float)) or isinstance(max_gap_s, bool):\n        raise ValueError(\"max_gap_s must be a finite int/float, not bool\")\n    if max_gap_s <= 0 or max_gap_s != max_gap_s or abs(max_gap_s) == float('inf'):\n        raise ValueError(\"max_gap_s must be a finite positive number\")\n    \n    # Validate samples is a list\n    if not isinstance(samples, list):\n        raise ValueError(\"samples must be a list\")\n    \n    # Validate each row and collect valid rows\n    valid_rows = []\n    seen_epochs = {}\n    \n    for i, row in enumerate(samples):\n        # Row must be list/tuple of length 3\n        if not isinstance(row, (list, tuple)) or len(row) != 3:\n            raise ValueError(f\"Row {i} must be a list/tuple of length 3\")\n        \n        epoch, fault, active = row\n        \n        # Validate epoch: must be finite numeric, not bool\n        if isinstance(epoch, bool):\n            raise ValueError(f\"Epoch at index {i} must not be bool\")\n        if not isinstance(epoch, (int, float)):\n            raise ValueError(f\"Epoch at index {i} must be int/float\")\n        if epoch != epoch or abs(epoch) == float('inf'):\n            raise ValueError(f\"Epoch at index {i} must be finite\")\n        \n        # Validate fault: must be actual bool or None\n        if fault is not None and not isinstance(fault, bool):\n            raise ValueError(f\"Fault at index {i} must be bool or None\")\n        if isinstance(fault, bool) and fault not in (True, False):\n            raise ValueError(f\"Fault at index {i} must be bool or None\")\n        \n        # Validate active: must be actual bool or None\n        if active is not None and not isinstance(active, bool):\n            raise ValueError(f\"Active at index {i} must be bool or None\")\n        if isinstance(active, bool) and active not in (True, False):\n            raise ValueError(f\"Active at index {i} must be bool or None\")\n        \n        # Handle duplicates: last row wins\n        seen_epochs[epoch] = (epoch, fault, active)\n    \n    # Get unique rows sorted by epoch ascending\n    unique_rows = sorted(seen_epochs.values(), key=lambda x: x[0])\n    \n    # Handle edge cases\n    if len(unique_rows) <= 1:\n        return (0.0, 0.0)\n    \n    fault_seconds = 0.0\n    covered_seconds = 0.0\n    \n    for i in range(len(unique_rows) - 1):\n        epoch, fault, active = unique_rows[i]\n        next_epoch = unique_rows[i + 1][0]\n        \n        # Determine interval duration (capped at max_gap_s)\n        interval = min(next_epoch - epoch, max_gap_s)\n        \n        # Skip if interval is non-positive (shouldn't happen due to sorting, but be safe)\n        if interval <= 0:\n            continue\n        \n        # Only contribute if active is True and fault is a bool\n        if active is True and fault is not None:\n            covered_seconds += interval\n            if fault is True:\n                fault_seconds += interval\n    \n    return (fault_seconds / 3600.0, covered_seconds / 3600.0)"
+          },
+          "timing": {
+            "total_duration": 891242086099,
+            "load_duration": 6320000000,
+            "prompt_eval_count": 553,
+            "prompt_eval_duration": 200513135000,
+            "eval_count": 827,
+            "eval_duration": 684339298000
+          },
+          "resource_receipt": "a30024c2a09a4b53b85220d6b3c1fc15",
+          "unload_requested": true,
+          "error": null,
+          "grade": {
+            "task": "elapsed",
+            "passed": 46,
+            "total": 46,
+            "failures": [],
+            "source_sha256": "1f614ed39ed6ae77f1d19d8e4927ee5058ef208ef6f19f7070970857c754f54d",
+            "code_executed": true
+          },
+          "review_status": "Source inspected before hash-gated independent checks",
+          "resources": {
+            "status": "completed",
+            "load_seconds": 6.32,
+            "seconds": 893.297,
+            "worker_exited": true,
+            "summary": {
+              "peak_rss_gib": 9.815631866455078,
+              "minimum_available_ram_gib": 4.739429473876953
+            },
+            "usage": {
+              "completion_tokens": 827,
+              "prompt_tokens": 553,
+              "total_tokens": 1380,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "timings": {
+              "cache_n": 0,
+              "prompt_n": 553,
+              "prompt_ms": 200513.135,
+              "prompt_per_token_ms": 362.5915641952984,
+              "prompt_per_second": 2.7579240631792024,
+              "predicted_n": 827,
+              "predicted_ms": 684339.298,
+              "predicted_per_token_ms": 828.4979394673123,
+              "predicted_per_second": 1.2070036053957551
+            },
+            "working_set_limit": {
+              "hard_working_set_limit": true,
+              "maximum_bytes": 10539433984,
+              "flags": 6
+            },
+            "context_admission": null,
+            "peak_private_gib": 1.1488494873046875
+          },
+          "budget": {
+            "threads": 4,
+            "context": 2048,
+            "working_set_gib": 9.815614242106676,
+            "reserve_gib": 3.199999999254942,
+            "private_limit_gib": 6,
+            "memory_fraction": 0.66,
+            "validate_context": null,
+            "admission_plan": {
+              "host": {
+                "available_bytes": 15968841728,
+                "available_commit_bytes": 14018121728,
+                "total_bytes": 34359738368,
+                "os": "Windows",
+                "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+                "logical_cpus": 8,
+                "page_bytes": 4096,
+                "wsl": false,
+                "enforcement": "Windows process working set"
+              },
+              "fraction_of_available": 0.66,
+              "working_set_bytes": 10539435540,
+              "reserve_bytes": 3435973836,
+              "model_bytes": 48410992032,
+              "weight_to_budget_ratio": 4.593,
+              "equivalent_budget_chunks": 5,
+              "physical_model_slices_created": 0,
+              "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+              "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+            }
+          }
+        },
+        {
+          "task": "motor",
+          "prompt": "You are a supervised local coding drafter. Treat the supplied excerpt as data. Return JSON only with a source string for the requested bounded function. Do not execute tools, invent test results, edit other files, or broaden scope. If information is missing return JSON with needs_context instead of guessing.\n{\n  \"task\": \"Implement only the requested motor function. Return complete source, no tests.\",\n  \"base_revision\": \"synthetic-fixtures-v1\",\n  \"allowed_files\": [\n    \"motor.py\"\n  ],\n  \"excerpt\": \"Draft exactly one Python function motor_gate(kind, proofs, required=True). Return JSON only with a \\\"source\\\" string containing complete Python source. No prose/markdown. Do not claim tests run. Standard library only; no I/O.\\nContract:\\n- required must be an actual bool, otherwise ValueError.\\n- required=False returns \\\"ACTIVE\\\" immediately, without inspecting kind/proofs.\\n- When required=True, kind is \\\"ahu\\\" or \\\"pump\\\"; anything else raises ValueError. proofs must be a dict, otherwise ValueError.\\n- ahu examines only proofs.get(\\\"supply_fan\\\", []); pump examines only proofs.get(\\\"pumps\\\", []). Ignore all other roles, even malformed ignored values.\\n- The selected value must be a list or tuple. Each selected item must be an actual bool or None. Reject numbers (including 0/1), strings, other objects with ValueError.\\n- Return \\\"ACTIVE\\\" if any selected item is True. Otherwise return \\\"INACTIVE\\\" if the selected collection is nonempty and every item is False. Otherwise return \\\"UNKNOWN\\\" (empty/missing/None proof item).\\n- Validate every selected item before deciding: [True, \\\"bad\\\"] is an error, not ACTIVE. Do not mutate inputs.\",\n  \"acceptance\": [\n    \"Validate all selected elements before deciding; any True is ACTIVE; only a nonempty all-False selection is INACTIVE; False with None is UNKNOWN.\"\n  ],\n  \"non_goals\": [\n    \"No filesystem, network, imports beyond math, tool calls, repository refactor or claims about test execution.\"\n  ]\n}",
+          "model": "qwen3-coder-next:q4_K_M",
+          "status": "needs_review",
+          "seconds": 501.269,
+          "prompt_sha256": "e8e4dbe0029c80e6d5522f74773c74e524a72b8169aa50ef52889c852ae7c9c4",
+          "answer": {
+            "source": "def motor_gate(kind, proofs, required=True):\n    if not isinstance(required, bool):\n        raise ValueError(\"required must be a bool\")\n    \n    if required is False:\n        return \"ACTIVE\"\n    \n    if kind not in (\"ahu\", \"pump\"):\n        raise ValueError(\"kind must be 'ahu' or 'pump'\")\n    \n    if not isinstance(proofs, dict):\n        raise ValueError(\"proofs must be a dict\")\n    \n    if kind == \"ahu\":\n        selected = proofs.get(\"supply_fan\", [])\n    else:  # kind == \"pump\"\n        selected = proofs.get(\"pumps\", [])\n    \n    # Validate selected is a list or tuple\n    if not isinstance(selected, (list, tuple)):\n        raise ValueError(\"selected proof must be a list or tuple\")\n    \n    # Check each item in selected\n    for item in selected:\n        if not isinstance(item, (bool, type(None))):\n            raise ValueError(\"proof item must be bool or None\")\n        if item is True:\n            return \"ACTIVE\"\n    \n    # If we get here, no True values found\n    if len(selected) == 0:\n        return \"UNKNOWN\"\n    \n    # Check if all are False (non-empty and no True/None)\n    if all(item is False for item in selected):\n        return \"INACTIVE\"\n    \n    # Otherwise, there must be at least one None and no True\n    return \"UNKNOWN\""
+          },
+          "timing": {
+            "total_duration": 499435046400,
+            "load_duration": 5598000000,
+            "prompt_eval_count": 493,
+            "prompt_eval_duration": 187410842000,
+            "eval_count": 361,
+            "eval_duration": 306363346000
+          },
+          "resource_receipt": "6b205030362a44c3b63ddeadb8e6dbd4",
+          "unload_requested": true,
+          "error": null,
+          "grade": {
+            "task": "motor",
+            "passed": 47,
+            "total": 49,
+            "failures": [
+              {
+                "case": "ahu_invalid_[True, 'bad']",
+                "expected": "ValueError",
+                "actual": "ACTIVE"
+              },
+              {
+                "case": "pump_invalid_[True, 'bad']",
+                "expected": "ValueError",
+                "actual": "ACTIVE"
+              }
+            ],
+            "source_sha256": "5c8295d979745de0ffc90f342c25169f8dfcfcceb5c530fa71d1ed2a59396197",
+            "code_executed": true
+          },
+          "review_status": "Source inspected before hash-gated independent checks",
+          "resources": {
+            "status": "completed",
+            "load_seconds": 5.598,
+            "seconds": 501.228,
+            "worker_exited": true,
+            "summary": {
+              "peak_rss_gib": 9.730182647705078,
+              "minimum_available_ram_gib": 4.316310882568359
+            },
+            "usage": {
+              "completion_tokens": 361,
+              "prompt_tokens": 493,
+              "total_tokens": 854,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "timings": {
+              "cache_n": 0,
+              "prompt_n": 493,
+              "prompt_ms": 187410.842,
+              "prompt_per_token_ms": 380.1436957403651,
+              "prompt_per_second": 2.6305842006728724,
+              "predicted_n": 361,
+              "predicted_ms": 306363.346,
+              "predicted_per_token_ms": 851.0092944444445,
+              "predicted_per_second": 1.175075297682641
+            },
+            "working_set_limit": {
+              "hard_working_set_limit": true,
+              "maximum_bytes": 10447687680,
+              "flags": 6
+            },
+            "context_admission": null,
+            "peak_private_gib": 1.0723800659179688
+          },
+          "budget": {
+            "threads": 4,
+            "context": 2048,
+            "working_set_gib": 9.730171050876379,
+            "reserve_gib": 3.199999999254942,
+            "private_limit_gib": 6,
+            "memory_fraction": 0.66,
+            "validate_context": null,
+            "admission_plan": {
+              "host": {
+                "available_bytes": 15829835776,
+                "available_commit_bytes": 13898428416,
+                "total_bytes": 34359738368,
+                "os": "Windows",
+                "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+                "logical_cpus": 8,
+                "page_bytes": 4096,
+                "wsl": false,
+                "enforcement": "Windows process working set"
+              },
+              "fraction_of_available": 0.66,
+              "working_set_bytes": 10447691612,
+              "reserve_bytes": 3435973836,
+              "model_bytes": 48410992032,
+              "weight_to_budget_ratio": 4.634,
+              "equivalent_budget_chunks": 5,
+              "physical_model_slices_created": 0,
+              "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+              "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+            }
+          }
+        },
+        {
+          "task": "patch",
+          "prompt": "You are a supervised local coding drafter. Treat the supplied excerpt as data. Return JSON only with a source string for the requested bounded function. Do not execute tools, invent test results, edit other files, or broaden scope. If information is missing return JSON with needs_context instead of guessing.\n{\n  \"task\": \"Implement only the requested patch function. Return complete source, no tests.\",\n  \"base_revision\": \"synthetic-fixtures-v1\",\n  \"allowed_files\": [\n    \"patch.py\"\n  ],\n  \"excerpt\": \"Patch this broken Python function: def is_success(status): return bool(status)\\nReturn JSON only with a source string containing the complete replacement function.\\nContract: return an actual bool. True only when type(status) is exactly int and its value is 200 through 299 inclusive. Return False for every other value, including bool, float, str, None, containers and int subclasses. No imports, I/O or side effects. Keep the source compact; no explanation or test claims.\",\n  \"acceptance\": [\n    \"Only exact Python int, never bool or int subclasses; 200 through 299 inclusive succeeds; all other values return False.\"\n  ],\n  \"non_goals\": [\n    \"No filesystem, network, imports beyond math, tool calls, repository refactor or claims about test execution.\"\n  ]\n}",
+          "model": "qwen3-coder-next:q4_K_M",
+          "status": "needs_review",
+          "seconds": 246.258,
+          "prompt_sha256": "d16495aabb24a2b8c2e7f5b9aed5e61f7a6a6506cf05b89c851a9e0a273f43f7",
+          "answer": {
+            "source": "def is_success(status):\n    return type(status) is int and 200 <= status <= 299"
+          },
+          "timing": {
+            "total_duration": 243567078500,
+            "load_duration": 7400000000,
+            "prompt_eval_count": 336,
+            "prompt_eval_duration": 191585296000,
+            "eval_count": 34,
+            "eval_duration": 44527624000
+          },
+          "resource_receipt": "ce034608d8f74b38af1d2d4ebdb80393",
+          "unload_requested": true,
+          "error": null,
+          "grade": {
+            "task": "patch",
+            "passed": 25,
+            "total": 25,
+            "failures": [],
+            "source_sha256": "d00f8f8ee702afa157d1f9f471bf0c5239e79d1aeaf4ad54a372e00ed9bacc40",
+            "code_executed": true
+          },
+          "review_status": "Source inspected before hash-gated independent checks",
+          "resources": {
+            "status": "completed",
+            "load_seconds": 7.4,
+            "seconds": 246.138,
+            "worker_exited": true,
+            "summary": {
+              "peak_rss_gib": 9.713966369628906,
+              "minimum_available_ram_gib": 4.308032989501953
+            },
+            "usage": {
+              "completion_tokens": 34,
+              "prompt_tokens": 336,
+              "total_tokens": 370,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "timings": {
+              "cache_n": 0,
+              "prompt_n": 336,
+              "prompt_ms": 191585.296,
+              "prompt_per_token_ms": 570.1943333333334,
+              "prompt_per_second": 1.753788036008776,
+              "predicted_n": 34,
+              "predicted_ms": 44527.624,
+              "predicted_per_token_ms": 1349.3219393939396,
+              "predicted_per_second": 0.7411129774182427
+            },
+            "working_set_limit": {
+              "hard_working_set_limit": true,
+              "maximum_bytes": 10430279680,
+              "flags": 6
+            },
+            "context_admission": null,
+            "peak_private_gib": 1.0653457641601562
+          },
+          "budget": {
+            "threads": 4,
+            "context": 2048,
+            "working_set_gib": 9.713957061059773,
+            "reserve_gib": 3.199999999254942,
+            "private_limit_gib": 6,
+            "memory_fraction": 0.66,
+            "validate_context": null,
+            "admission_plan": {
+              "host": {
+                "available_bytes": 15803457536,
+                "available_commit_bytes": 14262779904,
+                "total_bytes": 34359738368,
+                "os": "Windows",
+                "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+                "logical_cpus": 8,
+                "page_bytes": 4096,
+                "wsl": false,
+                "enforcement": "Windows process working set"
+              },
+              "fraction_of_available": 0.66,
+              "working_set_bytes": 10430281973,
+              "reserve_bytes": 3435973836,
+              "model_bytes": 48410992032,
+              "weight_to_budget_ratio": 4.641,
+              "equivalent_budget_chunks": 5,
+              "physical_model_slices_created": 0,
+              "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+              "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "supervised_repair": {
+    "task": "motor",
+    "first_pass_grade": {
+      "task": "motor",
+      "passed": 47,
+      "total": 49,
+      "failures": [
+        {
+          "case": "ahu_invalid_[True, 'bad']",
+          "expected": "ValueError",
+          "actual": "ACTIVE"
+        },
+        {
+          "case": "pump_invalid_[True, 'bad']",
+          "expected": "ValueError",
+          "actual": "ACTIVE"
+        }
+      ],
+      "source_sha256": "5c8295d979745de0ffc90f342c25169f8dfcfcceb5c530fa71d1ed2a59396197",
+      "code_executed": true
+    },
+    "base_source_sha256": "5c8295d979745de0ffc90f342c25169f8dfcfcceb5c530fa71d1ed2a59396197",
+    "prompt": "Return JSON only with a replacement string containing a Python block indented four spaces. No tests or tools.\nThe function already validates its container selected as list/tuple. Every selected item must be bool or None, and every item must be checked even if a True occurs first.\nCurrent faulty block:\n    for item in selected:\n        if not isinstance(item, (bool, type(None))):\n            raise ValueError(\"proof item must be bool or None\")\n        if item is True:\n            return \"ACTIVE\"\nIndependent tests: selected=[True, \"bad\"] must raise ValueError but returns ACTIVE, for both ahu and pump. Replace only that block: first validate ALL items; only after full validation return ACTIVE if any item is True. Otherwise fall through to the unchanged empty/all-False/unknown decision below. Do not return UNKNOWN or INACTIVE in this block. Keep it compact.",
+    "prompt_sha256": "e223daba6bdcca8c6abf1657ac99146d6f105976fcaf4b4163fec4c1b82879a0",
+    "model_answer": {
+      "replacement": "    for item in selected:\n        if not isinstance(item, (bool, type(None))):\n            raise ValueError(\"proof item must be bool or None\")\n    if any(item is True for item in selected):\n        return \"ACTIVE\""
+    },
+    "repaired_source": "def motor_gate(kind, proofs, required=True):\n    if not isinstance(required, bool):\n        raise ValueError(\"required must be a bool\")\n    \n    if required is False:\n        return \"ACTIVE\"\n    \n    if kind not in (\"ahu\", \"pump\"):\n        raise ValueError(\"kind must be 'ahu' or 'pump'\")\n    \n    if not isinstance(proofs, dict):\n        raise ValueError(\"proofs must be a dict\")\n    \n    if kind == \"ahu\":\n        selected = proofs.get(\"supply_fan\", [])\n    else:  # kind == \"pump\"\n        selected = proofs.get(\"pumps\", [])\n    \n    # Validate selected is a list or tuple\n    if not isinstance(selected, (list, tuple)):\n        raise ValueError(\"selected proof must be a list or tuple\")\n    \n    # Check each item in selected\n    for item in selected:\n        if not isinstance(item, (bool, type(None))):\n            raise ValueError(\"proof item must be bool or None\")\n    if any(item is True for item in selected):\n        return \"ACTIVE\"\n    \n    # If we get here, no True values found\n    if len(selected) == 0:\n        return \"UNKNOWN\"\n    \n    # Check if all are False (non-empty and no True/None)\n    if all(item is False for item in selected):\n        return \"INACTIVE\"\n    \n    # Otherwise, there must be at least one None and no True\n    return \"UNKNOWN\"",
+    "grade": {
+      "task": "motor",
+      "passed": 49,
+      "total": 49,
+      "failures": [],
+      "source_sha256": "2c1108c2ca48e4918d0daabaf7869da0ccba22156acaa0b4203f0f6d769fbeb5",
+      "code_executed": true
+    },
+    "client_seconds": 233.067,
+    "resources": {
+      "status": "completed",
+      "seconds": 233.035,
+      "load_seconds": 1.365,
+      "summary": {
+        "peak_rss_gib": 10.57094955444336,
+        "minimum_available_ram_gib": 4.115795135498047
+      },
+      "usage": {
+        "completion_tokens": 61,
+        "prompt_tokens": 230,
+        "total_tokens": 291,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 230,
+        "prompt_ms": 163394.162,
+        "prompt_per_token_ms": 710.4094,
+        "prompt_per_second": 1.4076390318033516,
+        "predicted_n": 61,
+        "predicted_ms": 66091.121,
+        "predicted_per_token_ms": 1101.5186833333332,
+        "predicted_per_second": 0.9078375293407416
+      },
+      "context_admission": {
+        "prompt_tokens": 230,
+        "output_budget": 256,
+        "template_margin": 64,
+        "context": 2048
+      },
+      "worker_exited": true
+    },
+    "method": "Supervisor reviewed the local replacement block and applied it to the pinned disposable candidate; no supervisor rewrite; full source inspected before hash-gated checks."
+  },
+  "context_overflow_probe": {
+    "expected_status": 413,
+    "error": "Inference HTTP 413: Prompt plus output budget exceeds context; split or trim the task.",
+    "receipt_id": "1522305074e04b17a2fbca798c1761f7",
+    "worker_exited": true,
+    "context_admission": {
+      "prompt_tokens": 1209,
+      "output_budget": 1024,
+      "template_margin": 64,
+      "context": 2048
+    },
+    "generation_timings_present": false
+  }
+}

@@ -93,7 +93,10 @@ def validate_chat(body,models):
         chars+=len(item['content'])
     if chars>12000: raise ApiError('Trim messages to 12000 characters.',413)
     options=body.get('options',{})
-    if not isinstance(options,dict) or set(options)-{'num_thread','num_ctx','num_predict','temperature','presence_penalty','repeat_penalty','seed'}: raise ApiError('Unsupported generation option.')
+    if not isinstance(options,dict) or set(options)-{'num_thread','num_ctx','num_predict','temperature'}: raise ApiError('Unsupported generation option.')
+    temperature=options.get('temperature',0)
+    if isinstance(temperature,bool) or not isinstance(temperature,(int,float)) or temperature!=0:
+        raise ApiError('This benchmark profile supports temperature:0 only.')
     if options.get('num_thread',profile['threads'])!=profile['threads']: raise ApiError('Thread count is fixed by the registered profile.')
     if options.get('num_ctx',profile['context'])!=profile['context']: raise ApiError('Context size is fixed by the registered profile.')
     tokens=options.get('num_predict',profile['max_tokens'])
@@ -172,6 +175,7 @@ class Manager:
             '--parallel','1','--gpu-layers','0','--device','none','--fit','off',
             '--load-mode','mmap','--lazy-mode','on','--no-repack','--no-warmup','--cache-ram','0']
         if profile.get('layer_stream',False):command+=['--log-verbosity','5']
+        if profile.get('validate_context',False):command+=['--no-context-shift']
         process=None; began=time.monotonic()
         try:
             env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_ARG_')}

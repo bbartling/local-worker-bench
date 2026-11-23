@@ -7,6 +7,11 @@ standard library only. Works on Windows and Linux. No installation step.
 
 Cluster planning: [Raspberry Pi control plane, with no inference](docs/pi-control-plane-plan.md).
 
+Read the illustrated [local AI cluster report (PDF)](docs/reports/local-ai-cluster-explained.pdf)
+for model basics, partitioning, API examples, request hops and hardware scenarios.
+Its editable source is [scripts/build_cluster_report.py](scripts/build_cluster_report.py)
+(requires ReportLab; rebuilding does not invoke a model).
+
 From this repository, run:
 
 ```sh

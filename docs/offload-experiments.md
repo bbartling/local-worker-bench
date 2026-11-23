@@ -2,6 +2,8 @@
 
 These tools are opt-in research prototypes. The Pi placement and three-worker
 deployment TODO are in [the control-plane plan](pi-control-plane-plan.md).
+The [API and cluster write-up](llama-api-and-cluster.md) explains the native
+server, our facade, RPC, and why mpi4py is not used.
 No physical three-machine cluster or large-model quality improvement is claimed.
 
 ## Contents

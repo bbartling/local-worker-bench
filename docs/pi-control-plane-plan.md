@@ -2,6 +2,8 @@
 
 Status: deployment plan, not a deployed or measured physical cluster.
 The Pi is an additional controller, outside the three compute-node RAM budgets.
+See [API ownership and model splitting](llama-api-and-cluster.md) for a reusable
+write-up distinguishing native llama.cpp serving from our gateway and future jobs.
 
 ## Placement
 

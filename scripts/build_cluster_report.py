@@ -213,6 +213,21 @@ h('Useful next milestone')
 p('Deploy the Pi as a forwarding-only controller. Prove an unavailable compute worker cannot start local inference there. Then run a small model through three real workers, record every boundary and failure path, and only afterward compare larger quantized coders on reviewed tasks.')
 p('Report source is scripts/build_cluster_report.py. This document describes the code at the time of writing; subsequent API changes should trigger a report rebuild. Illustrative JSON and topology are explanations, not benchmark receipts.','SmallX')
 
+page(11,'Who owns the API?','llama.cpp serves the model. Our surrounding service still owns the workflow.')
+note('<b>Yes for inference serving; not everything:</b> llama-server can provide the model HTTP API. The Pi gateway, deployment automation and proposed durable overnight jobs are separate responsibilities. Llama is a model family; llama.cpp is software that also supports other compatible model families.')
+table(['Layer','What we actually use or propose'],[
+('Client-facing API','Our Pi gateway exposes an authenticated Ollama-shaped /api/chat subset. It does not expose native /v1/* routes.'),
+('Worker facade','Our /api/chat validates profiles and budgets, then starts one local native process and records resource receipts.'),
+('Native serving','llama-server provides /v1/chat/completions internally. Upstream also supports streaming and structured JSON, subject to model/build support [7]. Our facade does not enable every upstream feature.'),
+('Native distributed work','ggml RPC is the proposed remote-device transport. It is not wired into the current facade configuration, and is not a generic HTTP chat protocol.'),
+('Overnight application','Durable /jobs routes, leases, retries, recovery and a quality-review ledger remain implementation work.')],[130,350])
+h('Do we use mpi4py?')
+p('No. The educational proof uses HTTP/TCP between Python processes; the planned native inference path uses ggml RPC. mpi4py could transport arrays for another custom pipeline, but would not automatically partition the model or manage its cache/state. Ray is optional future job orchestration, not an installed splitter. Neither is required to make an HTTP model request.')
+h('Write this accurately')
+p('One compatible model can have computation placed across multiple workers, with one client request and one final answer. A split checkpoint is not itself a cluster deployment. Our layer-by-layer illustration explains dependencies; actual native RPC communication need not follow a direct worker-1-to-2-to-3 topology. The Pi stays outside every inference stage.')
+p('Reusable write-up: <link href="https://github.com/bbartling/local-worker-bench/blob/main/docs/llama-api-and-cluster.md" color="#087F8C">docs/llama-api-and-cluster.md</link>','SmallX')
+p('[7] Native server reference: <link href="https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md" color="#087F8C">llama.cpp/tools/server/README.md</link>. Upstream capabilities are not a promise that our pinned prototype exposes them.','SmallX')
+
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42)
     canvas.setFont('Helvetica',8);canvas.setFillColor(NAVY)

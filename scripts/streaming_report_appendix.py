@@ -31,10 +31,10 @@ def append(story,page,p,h,code,table,note,root):
     runs=data['runs']
     page(20,'A model larger than this PC','Actual CPU inference from a 45.09 GiB checkpoint on this approximately 32 GiB Windows host.')
     story.append(ResidentFlow())
-    p('The original quantized GGUF files remain virtually mapped. The native engine faults in required pages and keeps its own hybrid model state. The experimental C++ callback splits evaluation at decoder outputs and evicts mapped weight ranges after each layer. This is resident-page control, not deleting tensors, rewriting the checkpoint or creating a second full weight copy.')
+    p('Think of SSD as a reference library and RAM as a small workbench. Both methods bring needed weight pages to the workbench. Our explicit policy clears them after each layer; Windows paging can keep useful pages for reuse. Both use the same complete checkpoint and preserve live inference state. We do not stitch together independent mini-model answers.')
     table(['Policy','Who controls residency?'],[
-        ('stream','Our callback targets blk.i.* mapped weights after l_out-i, synchronizes, samples residency and requests VirtualUnlock. The final callback also targets non-block weights.'),
-        ('paged','The same CPU mmap build and working-set cap, with no explicit layer eviction. Windows chooses which pages remain resident.'),
+        ('stream / "sliced"','Our code clears mapped weight pages after each layer. Lower observed process RAM, but clearing can discard reusable pages and adds overhead. The original files stay mapped.'),
+        ('paged / Windows','Windows chooses which mapped pages to keep or replace within the working-set cap. Useful pages can remain for reuse; the whole model still does not fit in RAM.'),
         ('Both','Four threads, fixed 2048 context, 4 GiB process working-set cap, host free-RAM/commit/private-memory guards, bounded requests and owned-process cleanup.')],[95,385])
     h('Why the model architecture matters')
     p('Qwen3-Coder-Next has 80B total parameters and roughly 3B active per token. Selected experts need not touch every expert weight on every decode step. Storage is still 45.09 GiB; active computation and process residency are different quantities. A dense 80B model may have very different disk costs.')

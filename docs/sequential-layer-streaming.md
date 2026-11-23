@@ -2,6 +2,30 @@
 
 Completed measurements: [80B coding, memory policies and supervised repair](benchmarks/2026-11-23-sequential-streaming.md).
 
+## The high-level difference: who clears the workbench?
+
+Think of the model files as a large reference library on SSD and RAM as a small
+workbench. Both methods bring the needed pages to the workbench to compute the
+next part of the answer. The difference is when those pages are cleared away.
+
+| Method | Plain-English behavior | Tradeoff in our trial |
+| --- | --- | --- |
+| Explicit layer eviction, nicknamed "sliced" | Our code says: finish this layer, then clear its weight pages from the process's workbench. | Lower observed process RAM, but aggressive clearing adds overhead and can discard pages useful again soon. |
+| Windows-managed paging | Windows says: keep useful pages while there is room, and replace pages as needed within the process working-set limit. | More opportunity to reuse pages; much faster in the matched 80B patch trial. |
+
+Both use the **same complete 80B Q4 checkpoint**, original mapped model files
+and native inference engine. Both retain the live activations and inference
+state needed to continue. "Sliced" does not mean independent mini-models whose
+answers are stitched together, and Windows paging does not mean the whole model
+fits in RAM. Neither trial used three physical computers.
+
+The matched patch produced identical code and passed 25/25 checks with either
+method: about **18 minutes with forced eviction versus 2 minutes with Windows
+paging** (8.8 times faster overall). These are single trials with shared OS
+caches, not a universal speed ratio. Clearing process RAM does not necessarily
+force a physical SSD reread: Windows may retain pages in its shared file cache.
+On this PC, OS paging is the better starting point for further bounded work.
+
 This experiment uses the cached quantized GGUF files directly. It does not
 convert them to FP32/PyTorch, allocate all weights as private RAM, or create a
 second 45 GiB weight copy. The native llama.cpp engine keeps the model's virtual

@@ -31,26 +31,37 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--backend',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--port',type=int,default=11438);p.add_argument('--wait-hours',type=float,default=48)
+    p.add_argument('--models',nargs='+',choices=MODELS,default=list(MODELS))
+    p.add_argument('--memory-fraction',type=float,default=.66)
+    p.add_argument('--request-timeout',type=int,default=1800)
     args=p.parse_args()
+    if not .1<=args.memory_fraction<=.66:raise ValueError('Use memory fraction .10 through .66')
+    if not 5<=args.request_timeout<=21600:raise ValueError('Request timeout must be 5 through 21600 seconds')
+    if len(args.models)!=len(set(args.models)):raise ValueError('Each model may be selected once')
     if not .1<=args.wait_hours<=48:raise ValueError('Finite campaign: .1 through 48 hours')
     if not args.backend.is_file():raise ValueError('Backend missing')
     args.output.mkdir(parents=True,exist_ok=True);state_path=args.output/'campaign.json'
     stop_path=args.output/'STOP'
     state=json.loads(state_path.read_text()) if state_path.exists() else {
         'started_epoch':time.time(),'deadline_epoch':time.time()+args.wait_hours*3600,
-        'models':{name:{'state':'waiting_for_verified_download'} for name in MODELS},
+        'models':{name:{'state':'waiting_for_verified_download'} for name in args.models},
+        'memory_fraction':args.memory_fraction,
+        'request_timeout':args.request_timeout,
         'generated_code_executed':False,'automatic_acceptance':False}
+    if (set(state['models'])!=set(args.models) or state.get('memory_fraction',.66)!=args.memory_fraction
+            or state.get('request_timeout',1800)!=args.request_timeout):
+        raise ValueError('Campaign settings changed; preserve prior evidence and use a new output directory')
     if 'backend_executable_sha256' not in state:
         state['backend_executable_sha256']=hashlib.sha256(args.backend.read_bytes()).hexdigest()
         try:state['source_revision']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
         except (OSError,subprocess.CalledProcessError):state['source_revision']=None
     save(state_path,state);profiles={}
-    for name in MODELS:
+    for name in args.models:
         manifest=json.loads((ROOT/'examples/paging'/f'{name}.download.json').read_text())
         profiles[name]={'files':[str((ROOT/'results/model-cache'/name/item['path']).resolve()) for item in manifest['files']],
-            'layer_stream':False,'validate_context':True,'memory_fraction':.66,
+            'layer_stream':False,'validate_context':True,'memory_fraction':args.memory_fraction,
             'threads':4,'context':2048,'max_tokens':1024,'working_set_gib':4,'reserve_gib':6,
-            'private_limit_gib':6,'request_timeout':1800,'load_timeout':180}
+            'private_limit_gib':6,'request_timeout':args.request_timeout,'load_timeout':180}
     config_path=args.output/'api-config.json'
     save(config_path,{'backend_executable':str(args.backend.resolve()),'models':profiles})
     manager=Manager(read_config(config_path.resolve()),args.output/'api-receipts')
@@ -60,8 +71,17 @@ def main():
     print(json.dumps({'campaign':str(state_path),'endpoint':endpoint,'waiting_for_verified_downloads':True}),flush=True)
     try:
         while time.time()<state['deadline_epoch'] and not stop_path.exists():
-            waiting=[name for name in MODELS if state['models'][name]['state']=='waiting_for_verified_download']
+            waiting=[name for name in args.models if state['models'][name]['state']=='waiting_for_verified_download']
             if not waiting:break
+            # Cooperate with an existing helper; the engine lease also guards races.
+            lease_folder=Path.home()/'.cache/local-worker-bench'
+            busy=any((lease_folder/name).exists() for name in ('inference.lock','offload-engine.lock'))
+            if busy:
+                if not state.get('waiting_for_worker'):
+                    state['waiting_for_worker']=True;save(state_path,state)
+                time.sleep(5);continue
+            if state.get('waiting_for_worker'):
+                state['waiting_for_worker']=False;save(state_path,state)
             progressed=False
             for name in waiting:
                 if stop_path.exists() or time.time()>=state['deadline_epoch']:break
@@ -75,12 +95,12 @@ def main():
                     smoke_body={'model':name,'messages':[{'role':'user','content':'Reply exactly READY.'}],
                         'stream':False,'think':False,'options':{'num_thread':4,'num_ctx':2048,'num_predict':8}}
                     with worker_lock():response=api(endpoint,'/api/chat',smoke_body,
-                        min(1800,max(1,state['deadline_epoch']-time.time())))
+                        min(args.request_timeout,max(1,state['deadline_epoch']-time.time())))
                     save(args.output/(name+'.smoke.json'),response)
                     if response.get('message',{}).get('content')!='READY':raise ValueError('Smoke did not return exactly READY')
                     output=args.output/(name+'-packet')
                     command=[sys.executable,str(ROOT/'scripts/paging_benchmark.py'),'--endpoint',endpoint,
-                        '--model',name,'--style','packet','--output',str(output.resolve())]
+                        '--model',name,'--style','packet','--output',str(output.resolve()),'--timeout',str(args.request_timeout)]
                     with (args.output/(name+'.client.log')).open('w',encoding='utf-8') as log:
                         child=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,
                             creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)

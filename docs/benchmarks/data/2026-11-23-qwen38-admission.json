@@ -1,0 +1,140 @@
+{
+  "artifact_repo": "unsloth/Qwen3.8-27B-GGUF",
+  "revision": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+  "files": [
+    {
+      "path": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+      "bytes": 16564259744,
+      "sha256": "1bce504dfecd84153666928a41d8a66706f0158d3a317bc5196b72819d7dc529"
+    }
+  ],
+  "verified_by_downloader": true,
+  "header_metadata": {
+    "general.architecture": "qwen35",
+    "general.name": "Qwen3.8-27B",
+    "qwen35.block_count": 65
+  },
+  "tensor_types": {
+    "Q6_K": 28,
+    "F32": 360,
+    "Q4_K": 74,
+    "Q5_K": 142,
+    "IQ4_XS": 142,
+    "Q3_K": 2,
+    "Q8_0": 107,
+    "IQ4_NL": 9,
+    "IQ3_S": 2
+  },
+  "tensor_count": 866,
+  "attempts": [
+    {
+      "label": "initial_66pct",
+      "id": "47dca7e302994cc886519c8f909c5c49",
+      "model": "qwen38-q4",
+      "status": "error",
+      "error": "Free RAM fell below the desktop reserve; worker stopped.",
+      "seconds": 204.417,
+      "load_seconds": 66.41,
+      "worker_exited": true,
+      "summary": {
+        "peak_rss_gib": 9.027530670166016,
+        "minimum_available_ram_gib": 2.9169883728027344
+      },
+      "context_admission": {
+        "prompt_tokens": 16,
+        "output_budget": 8,
+        "template_margin": 64,
+        "context": 2048
+      },
+      "usage": null,
+      "timings": null,
+      "admission_plan": {
+        "host": {
+          "available_bytes": 14686715904,
+          "available_commit_bytes": 12291227648,
+          "total_bytes": 34359738368,
+          "os": "Windows",
+          "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+          "logical_cpus": 8,
+          "page_bytes": 4096,
+          "wsl": false,
+          "enforcement": "Windows process working set"
+        },
+        "fraction_of_available": 0.66,
+        "working_set_bytes": 9693232496,
+        "reserve_bytes": 3435973836,
+        "model_bytes": 16564259744,
+        "weight_to_budget_ratio": 1.709,
+        "equivalent_budget_chunks": 2,
+        "physical_model_slices_created": 0,
+        "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+        "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+      }
+    },
+    {
+      "label": "conservative_40pct",
+      "id": "7dbb9cff6064425e87ec1a6bf119f5f6",
+      "model": "qwen38-q4",
+      "status": "completed",
+      "error": null,
+      "seconds": 79.681,
+      "load_seconds": 59.377,
+      "worker_exited": true,
+      "summary": {
+        "peak_rss_gib": 7.042022705078125,
+        "minimum_available_ram_gib": 10.45047378540039
+      },
+      "context_admission": {
+        "prompt_tokens": 16,
+        "output_budget": 8,
+        "template_margin": 64,
+        "context": 2048
+      },
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 16,
+        "total_tokens": 18,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 16,
+        "prompt_ms": 13475.663,
+        "prompt_per_token_ms": 842.2289375,
+        "prompt_per_second": 1.1873256254627322,
+        "predicted_n": 2,
+        "predicted_ms": 5726.505,
+        "predicted_per_token_ms": 5726.505,
+        "predicted_per_second": 0.1746265828808322
+      },
+      "admission_plan": {
+        "host": {
+          "available_bytes": 18903252992,
+          "available_commit_bytes": 17063575552,
+          "total_bytes": 34359738368,
+          "os": "Windows",
+          "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+          "logical_cpus": 8,
+          "page_bytes": 4096,
+          "wsl": false,
+          "enforcement": "Windows process working set"
+        },
+        "fraction_of_available": 0.4,
+        "working_set_bytes": 7561301196,
+        "reserve_bytes": 3435973836,
+        "model_bytes": 16564259744,
+        "weight_to_budget_ratio": 2.191,
+        "equivalent_budget_chunks": 3,
+        "physical_model_slices_created": 0,
+        "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+        "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+      }
+    }
+  ],
+  "limitations": [
+    "Smoke is not coding quality. Trials had different host availability and memory budgets; no controlled speed claim.",
+    "Downloads were concurrent; OS cache shared. Initial memory guard failure is retained."
+  ]
+}

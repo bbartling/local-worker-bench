@@ -48,6 +48,7 @@ def main(argv=None):
     paging.add_argument('--backend',type=Path,required=True)
     paging.add_argument('--output',type=Path,required=True)
     paging.add_argument('--fraction',type=float,default=.66)
+    paging.add_argument('--request-timeout',type=bounded(5,21600),default=1800)
     digest = sub.add_parser('hash', help='SHA-256 of a file; does not execute it')
     digest.add_argument('source', type=Path)
     model = sub.add_parser('run', help='Explicit model calls; never executes generated code')
@@ -72,7 +73,7 @@ def main(argv=None):
     helper.add_argument('--threads', type=bounded(1, 12), default=4)
     helper.add_argument('--context', type=bounded(512, 8192), default=2048)
     helper.add_argument('--max-tokens', type=bounded(64, 1024))
-    helper.add_argument('--timeout', type=bounded(5, 1800))
+    helper.add_argument('--timeout', type=bounded(5, 21600))
     helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     helper.add_argument('--response-format', choices=('json', 'text'), default='json',
                         help='JSON by default; opt into unstructured text for a supervised draft')
@@ -114,7 +115,7 @@ def main(argv=None):
                 'files':files,'layer_stream':False,'validate_context':True,'threads':4,'context':2048,'max_tokens':1024,
                 'memory_fraction':args.fraction,'working_set_gib':budget['working_set_bytes']/2**30,
                 'reserve_gib':budget['reserve_bytes']/2**30,'private_limit_gib':6,
-                'request_timeout':1800,'load_timeout':180}},'planning_receipt':budget}
+                'request_timeout':args.request_timeout,'load_timeout':180}},'planning_receipt':budget}
             write_json(args.output,config);print(json.dumps(budget,indent=2));return 0
         if args.command=='serve-gateway':
             from .gateway import serve

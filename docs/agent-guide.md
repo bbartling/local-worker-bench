@@ -81,7 +81,10 @@ wait without calling the hosted model every few seconds. Wake the supervisor at
 review checkpoints; never automatically merge a local draft. The current SQLite
 ledger provides durable checkpoints, not a full unattended multi-day scheduler.
 Campaign leases, automatic handoff, hosted-session recovery and `/jobs/*` remain
-future work. Local API calls are synchronous and bounded to 30 minutes.
+future work. Local API calls default to a 30-minute bound. Explicit slow-model
+profiles and clients can use up to six hours per request; RAM guards, finite
+output and cancellation remain active. Increase the deadline only as a recorded
+experiment, not an automatic retry. Long calls do not keep a hosted agent alive.
 
 An explicitly launched `scripts/run_paging_campaign.py` can wait up to 48 hours
 for the three pinned new-model downloads, own a loopback API, run smoke and
@@ -92,6 +95,10 @@ or unattended patch acceptance. No model work starts merely from downloading.
 Create `STOP` in its output directory to request cancellation and prevent new
 claims; normal shutdown stops owned workers. After a hard process kill, inspect
 API/native processes and the ledger before restarting rather than deleting locks.
+Use `--models` for a selected subset and `--memory-fraction` to lower the budget.
+Use a new output directory when changing campaign settings; resume refuses changed
+model selections, budgets or timeouts. It waits for existing local worker leases
+before claiming another model. A stale lease needs supervisor inspection.
 
 If usage limits are observable, inspect them at milestones. On less than 10%
 remaining, commit a checkpoint with exact running download/job IDs and restart

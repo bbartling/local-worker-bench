@@ -32,6 +32,10 @@ Monitor private bytes, host RAM and commit too; RSS is not total file-cache cost
 The defaults remain four threads, 2048 context, one worker, bounded output/time,
 6 GiB private-memory ceiling and process cleanup after each request. None of
 this changes the global Windows pagefile or closes desktop applications.
+The .66 value is an upper starting point, not a target to force. The first
+Qwen3.8 Q4 smoke hit the reserve at that fraction; a separately recorded .40
+trial passed with more headroom (host availability also changed). Preserve the
+failed attempt and lower the budget rather than disabling the reserve guard.
 New planner-generated profiles also render and tokenize chat before generation,
 reserving the requested output allowance plus a 64-token template margin.
 Oversized packets fail with HTTP 413 rather than silently consuming output room.

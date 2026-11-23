@@ -81,8 +81,43 @@ model. Qwen3.8-27B is a newer general model to compare on coding tasks.
 | --- | --- | ---: | --- |
 | Coder-Next Q4_K_M | Qwen GGUF, four parts | 48,410,992,032 | Verified; prior graded results above |
 | Coder-Next F16 | Qwen GGUF, four parts | 159,458,215,744 | Download initiated; no precision grade yet |
-| Qwen3.8-27B UD-Q4_K_M | Unsloth community GGUF | 16,564,259,744 | Download initiated; no grade yet |
+| Qwen3.8-27B UD-Q4_K_M | Unsloth community GGUF | 16,564,259,744 | Verified; compact patch 25/25, broader pending |
 | Qwen3.8-27B BF16 | Unsloth community GGUF, two parts | 54,657,735,616 | Download initiated; no grade yet |
+
+### Qwen3.8 Q4 follow-up
+
+The Q4 download finished and all hashes verified. Its first smoke at .66 of
+available RAM stopped after 204.417 seconds when available RAM reached 2.917 GiB,
+below the unchanged 3.2 GiB reserve. The worker exited. It produced no answer and
+receives no coding score. With an explicitly lower .40 fraction on a later host
+snapshot, smoke returned READY in 79.681 seconds including load/cleanup, with
+7.042 GiB peak process RSS and 10.450 GiB minimum available host RAM. Host
+availability also changed; this is not a controlled budget-only comparison.
+
+The same compact task packet then passed **25/25** in **284.918 seconds**. Its
+source hash exactly matches Coder-Next's packet answer. Qwen3.8 used 65.321 seconds
+for prompt evaluation and 212.459 seconds for generation; Coder-Next's prior
+packet used about 191.6 and 44.5 seconds respectively. Tokenizers, RAM budgets,
+host pressure and caches differ. Compare accepted-task wall time as well as
+prefill/decode separately, not only tokens/second or parameter counts. Motor
+and elapsed-time grades remain pending at this snapshot.
+
+The community file is a mixed quantization: header inspection found Q4_K,
+Q5_K, Q6_K, Q8_0, IQ4_XS/IQ4_NL, IQ3_S/Q3_K and F32 tensors. Those are tensor
+counts, not byte/parameter shares. Calling the artifact Q4 does not mean every
+weight has four bits. Exact provenance, tensor counts and both smoke attempts:
+`benchmarks/data/2026-11-23-qwen38-admission.json`. Reviewed compact code and
+timings: `benchmarks/data/2026-11-23-qwen38-firstpatch.json` (explicitly partial).
+
+### Project-shaped patch pilot prepared
+
+`examples/patch-project` is an intentionally broken miniature HTTP client with
+17 independent regression tests, eight of which make real loopback HTTP calls.
+The recorded red baseline fails 10 tests. A handwritten control passes all 17
+in offline CI. A local-model patch has not yet been graded on this project.
+The packet is `examples/paging/http-patch.packet.json`; preserve the unchanged
+tests and apply only a reviewed replacement function to an ignored disposable
+copy. This is a toy project-shaped check, not production-repository qualification.
 
 Download manifests under `examples/paging/` pin repository revisions, sizes and
 SHA-256. Verify all parts before load. BF16 and IEEE FP16 are different 16-bit

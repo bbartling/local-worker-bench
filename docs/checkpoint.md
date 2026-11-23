@@ -1,5 +1,52 @@
 # Paging tool continuation checkpoint
 
+## Latest follow-up: Qwen3.8 Q4 is verified and tested
+
+- Qwen3.8 Q4 download is complete and SHA-verified. First .66-budget smoke failed
+  the unchanged desktop-RAM guard; the owned worker exited. Preserve that failure.
+- A separately supervised .40-budget smoke passed. The compact coding packet
+  passed 25/25 in 284.918 seconds, with the identical source hash as Coder-Next.
+- Motor/elapsed drafts are still running in results/qwen38-q4-packet40-20261123;
+  do not grade incomplete responses or execute new source without inspection.
+  The manual API is port 11438, config results/qwen38-q4-conservative-config.json,
+  receipts results/qwen38-q4-conservative-api. Its in-flight calls retain their
+  original 1800-second limit; new code does not extend a running process.
+- Original results/paging-matrix-20261123 has STOP set and its API exited. Its Q4
+  needs_supervisor entry must not be replayed or relabeled as a coding failure.
+- New published snapshots: qwen38-admission.json and qwen38-firstpatch.json under
+  docs/benchmarks/data; the latter explicitly contains only the compact grade.
+- examples/patch-project is a staged toy project, not a graded model patch yet:
+  17 tests, 10 failing in the red baseline, all passing with a handwritten control.
+- 80 offline tests pass after selected-model/conservative-budget/long-timeout
+  campaign support and the disposable project fixture were added.
+
+The two large 16-bit downloads remain active and unverified at this snapshot
+(roughly 83/159 GB Coder-Next F16 and 34/55 GB Qwen3.8 BF16). Exact live status
+is in their download-status.json, not these rounded historical values.
+
+The next explicitly authorized precision campaign uses a new ledger and port,
+so it does not restart the failed Q4 claim or compete with its running client:
+
+```powershell
+python -u scripts/run_paging_campaign.py --backend results/layer-stream-backend/build/bin/Release/llama-server.exe --output results/paging-precision40-20261123 --port 11439 --wait-hours 48 --models qwen38-bf16 coder-next-f16 --memory-fraction .40 --request-timeout 21600
+```
+
+It waits for verified artifacts AND the existing local worker lease, then runs
+one model at a time. Six-hour calls are an explicit slow-precision experiment;
+output/context/RAM guards remain bounded and unchanged. All drafts stop for
+hosted source review and grading, not automatic execution or acceptance. Status:
+results/paging-precision40-20261123/campaign.json. Cancellation marker:
+results/paging-precision40-20261123/STOP. Runtime PID/log paths are recorded under
+results/paging-background. This does not stop the independent Q4 run on 11438;
+its documented /api/generate unload route can cancel that request when asked.
+
+Next supervisor: inspect and grade the Q4 motor/elapsed sources when complete,
+record any timeout as ungraded, then use the HTTP patch packet on a disposable
+copy. Review 16-bit outputs only after verification, inference and source review.
+Do not call the partial first-patch snapshot a complete model ranking.
+
+---
+
 23 November 2026. Active direction: one computer, OS-managed paging, hosted
 supervisor, bounded local drafting. Cluster features are historical research.
 

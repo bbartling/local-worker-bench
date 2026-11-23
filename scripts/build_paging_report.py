@@ -144,9 +144,10 @@ page(7,'Models and precision: compare fairly','The existing 80B Q4 is Qwen3-Code
 table(['Candidate','Weight storage','Current evidence'],[
     ('Coder-Next Q4_K_M / Qwen','48.41 GB','Verified; measured coding above'),
     ('Coder-Next F16 / Qwen','159.46 GB','Download started; no F16 grade'),
-    ('Qwen3.8-27B UD-Q4_K_M / Unsloth','16.56 GB','Download started; no grade'),
+    ('Qwen3.8-27B UD-Q4_K_M / Unsloth','16.56 GB','Verified; compact patch 25/25'),
     ('Qwen3.8-27B BF16 / Unsloth','54.66 GB','Download started; no BF16 grade')],[235,100,145])
 p('Q4 uses compressed block quantization; F16 and BF16 are distinct 16-bit floating formats. More precision increases storage and potential paging traffic, but does not guarantee a better accepted patch. Converting quantized weights back to 16-bit cannot restore lost precision. The community UD quantization also differs from Qwen Q4_K_M.')
+p('Qwen3.8 Q4 first hit the desktop reserve at the .66 budget. A later .40-budget smoke passed; its compact patch passed 25/25 in 284.9 seconds. Broader coding scores remain pending. Host availability changed too: retain both attempts rather than claiming a controlled speed gain. The reserve guard was not relaxed.')
 h('Ordered test gates')
 p('Verify pinned hashes and actual tensor types. Try load/smoke, then the compact patch and the same motor/elapsed contracts. Keep sampling, context, output budget and backend fixed. Record every incompatible load, timeout and guard failure. Only then try a disposable real patch and one reviewed repair.')
 note('No model is universally compatible. Architecture, tokenizer, chat template, quantization, workspace and live state must be supported. Dense models may reread far more weights per token than selected-expert MoE. This is CPU text-only work, not a guarantee for GPU or multimodal models.')

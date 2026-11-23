@@ -39,6 +39,13 @@ class OffloadTests(unittest.TestCase):
         p=self.config['models']['fixture']; self.assertEqual(p['threads'],4); self.assertEqual(p['context'],2048)
         self.assertTrue(offload_api.files_ready(p))
 
+    def test_explicit_overnight_timeout_is_bounded(self):
+        path=self.root/'long-config.json'
+        config={'backend_executable':sys.executable,'models':{'fixture':{'files':[str(self.model)],'request_timeout':21600}}}
+        path.write_text(json.dumps(config));self.assertEqual(offload_api.read_config(path)['models']['fixture']['request_timeout'],21600)
+        config['models']['fixture']['request_timeout']=21601;path.write_text(json.dumps(config))
+        with self.assertRaises(ValueError):offload_api.read_config(path)
+
     def test_sampler_settings_are_not_silently_ignored(self):
         for options in ({'temperature':.8},{'temperature':True},{'seed':42},{'repeat_penalty':1.2}):
             with self.subTest(options=options),self.assertRaises(offload_api.ApiError):

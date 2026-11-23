@@ -1,0 +1,12 @@
+{
+  "task": "Patch only accepted(status, payload, expected_id) in client.py. Return JSON with source containing only the complete replacement function. Keep it compact.",
+  "base_revision": "synthetic-http-patch-v1",
+  "allowed_files": ["client.py"],
+  "excerpt": "def accepted(status, payload, expected_id):\n    return status == 200 and bool(payload)\n\nThe unchanged check_endpoint() fetches a URL, parses JSON (or passes None for malformed JSON), then calls accepted(). Do not change the HTTP client.",
+  "acceptance": [
+    "First validate expected_id: it must be an exact nonempty Python str, otherwise raise ValueError even when status/payload is invalid.",
+    "Return an actual bool. True only if status is exact int 200, payload is a dict, payload['ok'] is exactly True, and payload['id'] is an exact str equal to expected_id.",
+    "For other status/payload values return False. No coercion. An HTTP 200 alone is not success. Preserve the public signature."
+  ],
+  "non_goals": ["No imports, I/O, tool calls, edits to tests or check_endpoint(), dependency changes, or claims that tests ran."]
+}

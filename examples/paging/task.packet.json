@@ -1,0 +1,11 @@
+{
+  "task": "Replace only is_success(status). Return the complete function source.",
+  "base_revision": "REPLACE_WITH_SOURCE_COMMIT_OR_SYNTHETIC_REVISION",
+  "allowed_files": ["status.py"],
+  "excerpt": "def is_success(status):\n    return bool(status)\n",
+  "acceptance": [
+    "Return an actual bool. True only for exact Python int values from 200 through 299 inclusive.",
+    "Reject bool, float, str, None and int subclasses by returning False. Do not coerce values."
+  ],
+  "non_goals": ["No imports, I/O, tool calls, other edits or claims that tests ran."]
+}

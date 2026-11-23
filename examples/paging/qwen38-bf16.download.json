@@ -1,0 +1,17 @@
+{
+  "model": "qwen38-bf16",
+  "repo": "unsloth/Qwen3.8-27B-GGUF",
+  "revision": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+  "files": [
+    {
+      "path": "BF16/Qwen3.8-27B-BF16-00001-of-00002.gguf",
+      "bytes": 49986159616,
+      "sha256": "b9966e82b7a4d87028b5eae061d578ee826305ebf8baea5bfc6e09bad0ba191f"
+    },
+    {
+      "path": "BF16/Qwen3.8-27B-BF16-00002-of-00002.gguf",
+      "bytes": 4671576000,
+      "sha256": "92e3943c4f9bd6292a7bef82369f65fed9bfed088b9df0fb2fa2ce17c9edfa02"
+    }
+  ]
+}

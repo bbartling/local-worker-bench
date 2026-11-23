@@ -43,6 +43,11 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('selftest', help='95 offline cases against hand-written controls; no inference')
+    paging=sub.add_parser('paging-plan',help='Detect host and create a paging profile; no inference')
+    paging.add_argument('--manifest',type=Path,required=True)
+    paging.add_argument('--backend',type=Path,required=True)
+    paging.add_argument('--output',type=Path,required=True)
+    paging.add_argument('--fraction',type=float,default=.66)
     digest = sub.add_parser('hash', help='SHA-256 of a file; does not execute it')
     digest.add_argument('source', type=Path)
     model = sub.add_parser('run', help='Explicit model calls; never executes generated code')
@@ -97,6 +102,20 @@ def main(argv=None):
     http.add_argument('--output', type=Path)
     args = parser.parse_args(argv)
     try:
+        if args.command=='paging-plan':
+            import json
+            from .paging import host_snapshot,plan,verified_files
+            if args.output.exists():raise ValueError('Use a new output file')
+            if not args.backend.is_file():raise ValueError('Backend executable missing; build it first')
+            manifest=json.loads(args.manifest.read_text(encoding='utf-8'))
+            files=verified_files(manifest)
+            budget=plan(host_snapshot(),sum(item['bytes'] for item in manifest['files']),args.fraction)
+            config={'backend_executable':str(args.backend.resolve()),'models':{manifest['model']:{
+                'files':files,'layer_stream':False,'validate_context':True,'threads':4,'context':2048,'max_tokens':1024,
+                'memory_fraction':args.fraction,'working_set_gib':budget['working_set_bytes']/2**30,
+                'reserve_gib':budget['reserve_bytes']/2**30,'private_limit_gib':6,
+                'request_timeout':1800,'load_timeout':180}},'planning_receipt':budget}
+            write_json(args.output,config);print(json.dumps(budget,indent=2));return 0
         if args.command=='serve-gateway':
             from .gateway import serve
             return serve(args)

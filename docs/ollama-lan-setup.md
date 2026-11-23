@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Ollama over a private LAN: Windows or Ubuntu
 
 An agent sends HTTP requests directly to the computer running Ollama. No SSH

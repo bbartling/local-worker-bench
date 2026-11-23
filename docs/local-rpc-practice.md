@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Practice one coding job across three local RPC CPU nodes
 
 This is an explicit Windows-only practice harness for the cached Qwen3.5 4B.

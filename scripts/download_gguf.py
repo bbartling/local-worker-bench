@@ -7,6 +7,7 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
+import re
 from pathlib import Path, PurePosixPath
 import shutil
 import threading
@@ -17,7 +18,7 @@ import urllib.request
 
 def entries(manifest, output):
     repo=manifest['repo']; revision=manifest['revision']
-    if len(repo.split('/'))!=2 or not all(c.isalnum() or c in '/-_' for c in repo):
+    if len(repo.split('/'))!=2 or any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',part) or '..' in part for part in repo.split('/')):
         raise ValueError('Use a public Hugging Face owner/repo identifier.')
     if len(revision)!=40 or any(c not in '0123456789abcdef' for c in revision):
         raise ValueError('Pin a full revision SHA.')

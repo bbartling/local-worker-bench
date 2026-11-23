@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Linux Mint: 4B Q4 + 30B Q4 local helpers
 
 Use this for an Ubuntu-based Linux Mint installation on the same dual-boot PC.

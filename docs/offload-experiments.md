@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Experimental CPU offload tools
 
 Completed follow-up: [sequential resident-layer implementation](sequential-layer-streaming.md)

@@ -38,12 +38,17 @@ def read_config(path):
     for name,profile in models.items():
         if not isinstance(name,str) or not name or len(name)>100: raise ValueError('Invalid model alias.')
         if type(profile.setdefault('layer_stream',False)) is not bool: raise ValueError('layer_stream must be a bool.')
+        if type(profile.setdefault('validate_context',False)) is not bool:raise ValueError('validate_context must be a bool')
+        fraction=profile.get('memory_fraction')
+        if fraction is not None and (isinstance(fraction,bool) or not isinstance(fraction,(int,float)) or not .1<=fraction<=.66):
+            raise ValueError('memory_fraction must be between .10 and .66')
+        if fraction is not None and profile['layer_stream']:raise ValueError('Automatic paging budgets require layer_stream:false')
         files=profile.get('files')
         if not isinstance(files,list) or not files: raise ValueError('Register all GGUF split files, in order.')
         profile['files']=[str((path.parent/Path(f)).resolve()) if not Path(f).is_absolute() else f for f in files]
         for key,default,low,high in [('threads',4,1,4),('context',2048,512,8192),('max_tokens',640,1,1024),
                                     ('request_timeout',600,5,1800),('load_timeout',180,5,600),
-                                    ('working_set_gib',8,0.05,24),('reserve_gib',6,2,24),
+                                    ('working_set_gib',8,0.05,24),('reserve_gib',6,2,1024),
                                     ('private_limit_gib',6 if profile['layer_stream'] else 16,1,16)]:
             value=profile.setdefault(key,default)
             if isinstance(value,bool) or not isinstance(value,(float,int)) or not low<=value<=high: raise ValueError('Invalid model profile setting: '+key)
@@ -147,6 +152,13 @@ class Manager:
         finally: self.lock.release(); self.finished.set()
 
     def _chat(self,model,profile,native):
+        if profile.get('memory_fraction') is not None:
+            from .paging import host_snapshot,plan
+            profile=dict(profile)
+            budget=plan(host_snapshot(),sum(Path(f).stat().st_size for f in profile['files']),profile['memory_fraction'])
+            profile['working_set_gib']=budget['working_set_bytes']/memory.GIB
+            profile['reserve_gib']=budget['reserve_bytes']/memory.GIB
+            profile['admission_plan']=budget
         if memory.available_memory()['available_bytes']<profile['reserve_gib']*memory.GIB+memory.GIB: raise ApiError('Not enough RAM above the desktop reserve to start.',503)
         self.cancel.clear(); request_id=uuid.uuid4().hex
         folder=self.results/request_id; folder.mkdir(parents=True,exist_ok=False)
@@ -184,6 +196,18 @@ class Manager:
                     time.sleep(.25)
                 receipt['load_seconds']=round(time.monotonic()-began,3)
                 receipt['bulk_prefetch_disable_confirmed']='LWB: bulk mmap prefetch disabled' in (folder/'backend.log').read_text(encoding='utf-8',errors='replace')
+                if profile.get('validate_context',False):
+                    rendered=backend_request(port,'/apply-template',{'messages':native['messages'],
+                        'chat_template_kwargs':{'enable_thinking':False}},timeout=10)
+                    if not isinstance(rendered.get('prompt'),str):raise ApiError('Could not render context for admission.',502)
+                    tokenized=backend_request(port,'/tokenize',{'content':rendered['prompt'],'add_special':True},timeout=10)
+                    tokens=tokenized.get('tokens')
+                    if not isinstance(tokens,list):raise ApiError('Could not tokenize context for admission.',502)
+                    receipt['context_admission']={'prompt_tokens':len(tokens),'output_budget':native['max_tokens'],
+                        'template_margin':64,'context':profile['context']}
+                    if len(tokens)+native['max_tokens']+64>profile['context']:
+                        raise ApiError('Prompt plus output budget exceeds context; split or trim the task.',413)
+                    self.observe(process,profile,receipt['samples'],began)
                 channel=queue.Queue()
                 def send():
                     try: channel.put((True,backend_request(port,'/v1/chat/completions',native,profile['request_timeout'])))

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="510" viewBox="0 0 1200 510" role="img" aria-labelledby="title desc">
+<title id="title">Local Worker Bench: one model, a small RAM workbench</title>
+<desc id="desc">A hosted supervisor sends bounded coding tasks to a CPU. OS paging moves needed model-weight pages from SSD to RAM. The supervisor reviews outputs and independent checks.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#102b46"/><stop offset="1" stop-color="#174d64"/></linearGradient><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0 0L8 4L0 8" fill="none" stroke="#69dfcc" stroke-width="1.5"/></marker></defs>
+<rect width="1200" height="510" rx="28" fill="url(#bg)"/>
+<text x="60" y="67" fill="#69dfcc" font-family="Arial,sans-serif" font-size="17" letter-spacing="3">LOCAL WORKER BENCH</text>
+<text x="60" y="115" fill="white" font-family="Arial,sans-serif" font-size="38" font-weight="bold">Big model. Small workbench.</text>
+<text x="60" y="148" fill="#c5dce5" font-family="Arial,sans-serif" font-size="20">One computer · CPU inference · OS-managed paging</text>
+<g stroke="#59879b" stroke-width="2" fill="#173b54"><rect x="60" y="215" width="295" height="203" rx="16"/><rect x="455" y="215" width="300" height="203" rx="16"/><rect x="855" y="215" width="285" height="203" rx="16"/></g>
+<g fill="white" font-family="Arial,sans-serif" font-size="22" font-weight="bold"><text x="85" y="251">MODEL ON SSD</text><text x="480" y="251">RAM + CPU</text><text x="880" y="251">HOSTED SUPERVISOR</text></g>
+<g fill="#69dfcc"><rect x="85" y="274" width="245" height="19" rx="3"/><rect x="85" y="301" width="245" height="19" rx="3"/><rect x="85" y="328" width="245" height="19" rx="3"/><rect x="85" y="355" width="245" height="19" rx="3"/></g>
+<g fill="#69dfcc"><rect x="480" y="278" width="67" height="61" rx="7"/><rect x="557" y="278" width="67" height="61" rx="7"/></g><rect x="634" y="278" width="95" height="61" rx="7" fill="#335b71" stroke="#69dfcc" stroke-dasharray="6 5"/>
+<g fill="#c5dce5" font-family="Arial,sans-serif" font-size="17"><text x="85" y="399">Weights = learned numbers</text><text x="480" y="370">Needed pages + live state</text><text x="480" y="399">Reuse pages; reclaim as needed</text><text x="880" y="292">1. Scope a small task</text><text x="880" y="327">2. Review the local draft</text><text x="880" y="362">3. Run independent tests</text><text x="880" y="397">4. Accept or critique</text></g>
+<path d="M367 296H441M441 338H367M843 296H767M767 338H843" fill="none" stroke="#69dfcc" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="60" y="471" fill="#c5dce5" font-family="Arial,sans-serif" font-size="18">Qwen coding experiments · Complete model stays mapped · No fixed model slices</text>
+</svg>

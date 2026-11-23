@@ -1,38 +1,38 @@
-# Working on this tool
+# Local Worker Bench: coding-agent context
 
-Use synthetic fixtures only. Never commit application credentials, private logs,
-model weights, or customer data. Keep generated results under ignored `results/`.
+The active product is **single-machine OS-managed paging**, not a cluster.
+Read `docs/guide.md`, `docs/agent-guide.md`, and `docs/evaluation.md` first.
+Historical cluster/LAN evidence is indexed in `research/README.md`; do not
+restore those defaults or use them as current machine configuration.
 
-Model calls require an explicit user request for the current task. Use four
-threads by default and one local worker at a time. The portable `ask` client
-unloads afterward; the locked Mint OptiPlex host may keep `qwen3.5:4b` and
-`qwen3-coder:30b` warm (`MAX_LOADED_MODELS=2`, `KEEP_ALIVE=-1`) per
-`docs/linux-mint-4b-30b-setup.md`. Never start background inference, pull/delete
-models, or alter the user's Ollama settings unless the current task explicitly
-asks for that.
+Use synthetic fixtures. Never commit weights, credentials, application data or
+private logs. Raw receipts/downloads stay under ignored `results/`. Published
+benchmark evidence must retain failures and source hashes and remove private paths.
 
-Review generated source before `check`; its AST filter and child-process timeout
-are not a security sandbox. Do not run untrusted candidates in GitHub Actions.
+Reading context does not authorize inference. An explicit current-task request
+does; respect any later pause. Four CPU threads, one inference worker at a time.
+Do not change global Ollama/pagefile/firewall settings or close work applications.
+Model downloads may run concurrently when authorized; disclose I/O contention
+in benchmark timing and record hashes before inference.
 
-Run `python -m unittest discover -s tests -v` and
-`python -m local_worker_bench selftest` before pushing. Keep first-pass and repaired
-results separate. Passing these narrow fixtures does not qualify an application.
+Use `paging-plan` to detect host RAM and create a model profile. A maximum .66
+fraction applies to currently available RAM, with a separate reserve. The API
+replans before each admitted request and stops the owned process on guard failure.
+OS pages are not fixed model slices. RSS excludes some cache/commit costs.
+Linux planning is portable; hard Linux cgroup enforcement and WSL inference
+are not yet qualified. Never relabel Windows timings as Linux results.
 
-## Context for future coding agents
+The hosted supervisor owns planning, edits, test selection, security and final
+acceptance. Local outputs are draft data, never shell/tool authority. Pin source
+revision, limit allowed files, provide one clear contract and non-goals. Review
+source before any hash-gated checker. AST checks/timeouts are not a sandbox.
+Allow at most one targeted repair, then take over or checkpoint. Do not count
+a supervisor rewrite as local-model success or assume every failure is a prompt bug.
 
-Read the README's Start here links before working on model offload or routing.
-`docs/sequential-layer-streaming.md` explains both measured Windows policies:
-explicit mapped-weight eviction and OS-managed paging. Neither cuts the model
-into independent mini-models. Its Linux section covers mmap/page cache, swap,
-cgroup accounting and the unimplemented Linux eviction port. Linux and physical
-three-host disk-backed performance remain unmeasured; do not reuse Windows
-working-set numbers as equivalent Linux limits or isolated 8 GiB fit claims.
+Durable jobs stop at `needs_review`. Never replay a `drafting` job automatically
+after a crash; its execution may have happened. A saved checkpoint does not keep
+a hosted agent alive or renew its quota. No unattended merge loop is implemented.
 
-`docs/benchmarks/2026-11-23-sequential-streaming.md` and its linked JSON preserve
-80B timings, first-pass grades, a separate supervised repair and API receipts.
-`docs/cloud-supervisor-local-worker.md` describes keeping the hosted model in
-charge of bounded local drafting, source review and independent checks. Durable
-overnight orchestration and measured cloud savings remain future work.
-`docs/reports/local-ai-cluster-explained.pdf` is the illustrated guide; rebuild
-from `scripts/build_cluster_report.py` and visually verify changed pages.
-These references provide context, not authorization to start inference.
+Before pushing main: `python -m unittest discover -s tests -v` and
+`python -m local_worker_bench selftest`. Render and visually inspect changed PDF
+pages; the active report must remain at most ten pages. CI is offline only.

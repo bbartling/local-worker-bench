@@ -1,0 +1,27 @@
+{
+  "model": "coder-next-f16",
+  "repo": "Qwen/Qwen3-Coder-Next-GGUF",
+  "revision": "b82fb7382639d97b38fa7672e526c760c2fb358e",
+  "files": [
+    {
+      "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00001-of-00004.gguf",
+      "bytes": 49202919520,
+      "sha256": "b763aa9ecaa0e904f5f3d51dab813ff3acf329512d563dea9f6f1690a3afb17d"
+    },
+    {
+      "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00002-of-00004.gguf",
+      "bytes": 49296066560,
+      "sha256": "fdfc7030f9ad74536510aba1fb2a5f320e2707b117079942515e286fa3b456c7"
+    },
+    {
+      "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00003-of-00004.gguf",
+      "bytes": 48992048768,
+      "sha256": "7ecba5137cf69efe202875c852240b6c8d7cca58a4511e36bf48bf616134e617"
+    },
+    {
+      "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00004-of-00004.gguf",
+      "bytes": 11967180896,
+      "sha256": "2123c5cf7674131123d736e2a780fcadfae01346056ade288ba399a38c164a10"
+    }
+  ]
+}

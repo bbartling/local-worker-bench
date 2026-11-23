@@ -75,6 +75,8 @@ class OffloadTests(unittest.TestCase):
         available={'available_bytes':20*memory.GIB,'available_commit_bytes':20*memory.GIB}
         low=dict(available,available_bytes=memory.GIB)
         def native(port,path,body=None,timeout=5):
+            if path=='/apply-template':return {'prompt':'Synthetic rendered prompt'}
+            if path=='/tokenize':return {'tokens':[1,2,3,4,5]}
             if path=='/health':
                 if load_error: raise OSError('Synthetic unready')
                 return {'status':'ok'}
@@ -101,6 +103,16 @@ class OffloadTests(unittest.TestCase):
         self.assertIn('--no-repack',command); self.assertIn('--no-warmup',command)
         self.assertEqual(command[command.index('--load-mode')+1],'mmap')
         self.assertEqual(command[command.index('--threads')+1],'4')
+
+    def test_context_admission_preserves_output_room(self):
+        self.config['models']['fixture']['validate_context']=True
+        self.run_fake()
+        receipt=json.loads(next((self.root/'receipts').glob('*/receipt.json')).read_text())
+        self.assertEqual(receipt['context_admission']['prompt_tokens'],5)
+
+    def test_context_overflow_stops_worker_before_generation(self):
+        profile=self.config['models']['fixture'];profile.update(validate_context=True,context=512,max_tokens=512)
+        with self.assertRaisesRegex(offload_api.ApiError,'exceeds context'):self.run_fake()
 
     def test_streaming_profile_fails_closed_without_backend_evidence(self):
         self.config['models']['fixture']['layer_stream']=True
@@ -201,6 +213,13 @@ class DownloadManifestTests(unittest.TestCase):
         for bad in ('../escape.gguf','/absolute.gguf','C:/escape.gguf','script.py','..\\escape.gguf'):
             manifest['files'][0]['path']=bad
             with self.subTest(path=bad), self.assertRaises(ValueError): self.module.entries(manifest,Path('results/models'))
+
+    def test_dotted_model_repo_allowed_but_traversal_rejected(self):
+        manifest=json.loads((Path(__file__).resolve().parents[1]/'examples/paging/qwen38-q4.download.json').read_text())
+        self.assertEqual(len(self.module.entries(manifest,Path('results/models'))),1)
+        for repo in ('../bad','user/../bad','user/a..b','https://bad/model'):
+            manifest['repo']=repo
+            with self.subTest(repo=repo),self.assertRaises(ValueError):self.module.entries(manifest,Path('results/models'))
 
 
 if __name__=='__main__': unittest.main()

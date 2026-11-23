@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Three-worker CPU cluster: API and coordinator on worker 1
 
 Status: deployment plan, not a deployed or measured physical cluster.

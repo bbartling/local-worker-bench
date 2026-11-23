@@ -1,3 +1,5 @@
+> Historical research: retained for reproducibility and AI context. The active tool is single-machine OS paging; start at [the current guide](guide.md). Old paths/settings describe prior experiments. The old cluster PDF was replaced by `reports/os-paging-guide.pdf`.
+
 # Sequential resident-layer streaming on this Windows PC
 
 Completed measurements: [80B coding, memory policies and supervised repair](benchmarks/2026-11-23-sequential-streaming.md).

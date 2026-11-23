@@ -12,8 +12,8 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.utils import simpleSplit
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Preformatted, Flowable
 
-ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'docs/reports/local-ai-cluster-explained.pdf'
+ROOT=Path(__file__).resolve().parents[2]
+OUT=ROOT/'results/historical-cluster-report.pdf'
 NAVY=colors.HexColor('#132C42'); TEAL=colors.HexColor('#087F8C'); LIGHT=colors.HexColor('#EDF5F7')
 styles=getSampleStyleSheet()
 styles.add(ParagraphStyle(name='TitleX',fontName='Helvetica-Bold',fontSize=27,leading=31,textColor=NAVY,spaceAfter=18))

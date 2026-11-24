@@ -18,8 +18,14 @@ inspects real tensor types/shapes/templates, then runs only the new two aliases
 on identical v2 tasks at eight threads/120 minutes/2048 output/4096 context/.40 RAM.
 Coder-Next Q4/F16 results in the preceding matrix supply the other half of the
 four-way comparison. Existing UD Q4 remains extra, BF16 separate. Download I/O
-contention must be disclosed in timing. Extension dispatcher is not yet launched;
-do so once after tests/commit with fresh output and record its PID/session here.
+contention must be disclosed in timing. Extension dispatcher is already launched:
+PID 10388, managed session 56162, output results/qwen38-precision-extension-20261124,
+state waiting_for_parent_and_verified_models. It waits at most 24 hours for the
+parent matrix and both verified downloads, then runs a separate finite matrix.
+Do not start another dispatcher. STOP there, or cancellation of the parent pipeline,
+prevents queued inference while downloads remain independent. Source at launch:
+5a3996c. Latest checks: 104 offline tests + selftest pass. PDF refreshed and visually
+verified, eight pages; it records actual failures and the pending precision pair.
 
 ## Latest steering: overnight 120-minute / eight-thread follow-up
 

@@ -1,13 +1,14 @@
 # Cursor handoff - local worker research and patch benchmark
 
-## Current instruction: pause inference, finish review offline
+## Current instruction: Suite-3 six-format matrix RUNNING
 
-The user wants another model's critique of the tests before further model runs,
-and may have Cursor finish the project to conserve hosted weekly usage.
-**Do not run inference or remove INFERENCE_PAUSED until the user explicitly resumes.**
-Downloads, source/header inspection and offline handwritten-control tests may continue.
-All model-test queues have stopped. Download completion must not restart them.
-Read [the critique request](docs/review-request.md), then this entire handoff.
+User resumed 24 Nov 2026. Durable dispatcher:
+`results/suite3-six-matrix-20261124-run2/` (`scripts/handoff_suite3_six_matrix.py`).
+Wave A: coder-next-q4, coder-next-f16, qwen38-standard-q4, qwen38-bf16.
+Wave B (hour-sleep until verified): qwen38-f16, coder-next-bf16.
+Settings: Suite 3, 120 min, .66 RAM, auto threads (~5), 2048 tokens, prompt v2.
+Write `STOP` in that folder to cancel. Do not launch a second matrix.
+First attempt folder `...20261124` failed on hours>24; leave as evidence.
 
 Repository: `C:\Users\ben\Documents\local-worker-bench`.
 Remote: https://github.com/bbartling/local-worker-bench, default branch **main**.

@@ -1,5 +1,38 @@
 # Paging evaluation: measurements and a fair next comparison
 
+## Completed 90-minute retest
+
+After a three-hour supervisor wait, all three model attempts had finished and
+all downloads had verified. The supervisor inspected both complete sources and
+executed them unchanged through hash-gated independent motor checks.
+
+| Model | First-pass motor grade | Coding request wall | Outcome |
+| --- | ---: | ---: | --- |
+| Qwen3.8-27B UD-Q4_K_M | **49/49** | 1978.139 s (33.0 min) | Complete, no repair |
+| Qwen3.8-27B BF16 | Ungraded | 5401.615 s (90.0 min) | Deadline; 137 bytes retained |
+| Qwen3-Coder-Next 80B F16 | **49/49** | 2508.905 s (41.8 min) | Complete, no repair |
+
+The motor packet hash was identical across all three. Four threads, 2048 context,
+1024 output tokens, .40 of available RAM, reserve/private guards and native SSE
+capture were used. The request deadline includes startup; separate readiness
+smokes add overhead. All owned workers exited and the finite cohort stopped.
+No 120-minute escalation was needed for either completed model; BF16 remains
+ungraded, with no automatic retry scheduled.
+
+Both complete answers validate every selected item before deciding and handle
+mixed False/None correctly. This is one synthetic function with 49 correlated
+cases, not evidence of general patching reliability or measured cloud savings.
+The earlier Coder-Next Q4 motor packet scored 47/49 in 501.269 seconds and 49/49
+after one local repair. Its RAM budget and run conditions differ, so F16's better
+first-pass result here does not establish a precision-only advantage. Repeated
+matched trials and real repository patches remain necessary. Concurrent download,
+OS cache and desktop activity also prevent a clean timing ranking.
+
+Full prompts, unchanged sources, grades, verified download manifests, timing,
+receipt summaries, hashes and the ungraded BF16 prefix are preserved in
+`benchmarks/data/2026-11-23-retest90.json`. Raw high-frequency resource samples
+remain in the local results directory, with their receipt hashes in the snapshot.
+
 ## Completed before the refactor
 
 One i7-9700 / 32 GB Windows PC, four CPU threads, 2048 context. Native CPU
@@ -80,9 +113,9 @@ model. Qwen3.8-27B is a newer general model to compare on coding tasks.
 | Candidate | Publisher / format | Download bytes | Status |
 | --- | --- | ---: | --- |
 | Coder-Next Q4_K_M | Qwen GGUF, four parts | 48,410,992,032 | Verified; prior graded results above |
-| Coder-Next F16 | Qwen GGUF, four parts | 159,458,215,744 | Download initiated; no precision grade yet |
-| Qwen3.8-27B UD-Q4_K_M | Unsloth community GGUF | 16,564,259,744 | Verified; compact patch 25/25, broader pending |
-| Qwen3.8-27B BF16 | Unsloth community GGUF, two parts | 54,657,735,616 | Download initiated; no grade yet |
+| Coder-Next F16 | Qwen GGUF, four parts | 159,458,215,744 | Verified; motor 49/49 first pass, 41.8 min |
+| Qwen3.8-27B UD-Q4_K_M | Unsloth community GGUF | 16,564,259,744 | Verified; compact patch 25/25, motor 49/49 |
+| Qwen3.8-27B BF16 | Unsloth community GGUF, two parts | 54,657,735,616 | Verified; motor deadline at 90 min, ungraded |
 
 ### Qwen3.8 Q4 follow-up
 

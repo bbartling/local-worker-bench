@@ -1,5 +1,25 @@
 # Paging tool continuation checkpoint
 
+## Completed after the three-hour wait
+
+The handoff and finite cohort are finished. No further inference is scheduled.
+Qwen3.8 Q4 returned its motor source in 1978.139 s and Coder-Next F16 in
+2508.905 s. The supervisor inspected both complete functions and independently
+hash-graded their unchanged source: **49/49 first pass each**, no repairs.
+Qwen3.8 BF16 reached its 5400-second deadline (5401.615 s client wall); its
+137-byte incomplete prefix is retained and ungraded. All owned native workers
+exited. All three downloads, including 159.46 GB F16, are verified.
+
+The old legacy BF16 patch request was capped at its 90-minute boundary. Its
+terminated client left inference.lock with PID 28448; that process was confirmed
+absent before this exact stale lease was removed. The new cohort then proceeded.
+Do not replay the completed cohort or extend BF16 automatically to 120 minutes.
+The user considered that option; two models completed within 90 minutes already.
+Next useful evidence is matched repeated trials or a bounded real-project patch,
+not another unrestricted timeout increase. Public evidence is in
+benchmarks/data/2026-11-23-retest90.json and evaluation.md. Earlier active-state
+notes below are retained as history and are superseded by this completion note.
+
 ## Active instruction: bounded 90-minute retest with partial capture
 
 User authorized one longer retest and continued testing of the new models, with

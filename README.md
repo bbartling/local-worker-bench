@@ -13,6 +13,7 @@ CPU inference, model weights on SSD, and the operating system managing which
 pages stay in memory. The hosted agent plans, reviews, tests and accepts every patch.
 
 - Windows: measured Qwen3-Coder-Next **80B Q4** inference on an i7-9700 / 32 GB PC.
+- Latest overnight test: Qwen3.8 Q4 and Coder-Next F16 each passed **49/49** motor cases in 33 and 42 minutes; BF16 timed out at 90 minutes.
 - Automatic admission budget: up to **66% of available RAM**, with a desktop reserve.
 - Local Ollama-shaped API over **llama.cpp**; bounded requests and worker cleanup.
 - Durable draft/review checkpoints, explicit prompt packets and independent grading.

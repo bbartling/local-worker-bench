@@ -36,7 +36,19 @@ offset caps, token/offset transition, token after total, boolean/float max_pages
 Coder-Next Q4 asked for clarification in 321.655 s; no source to grade.
 All three original pagination attempts accepted 0/3. A just-claimed old telemetry
 task was cancelled by the handoff and excluded from model attempts. Original
-cohort finished. Dispatcher state is now matched_motor8; new matrix not started.
+cohort finished.
+
+Matched motor8 completed: 1951.473 s, 311 output tokens, supervisor inspected
+complete function and hash-graded unchanged source 49/49. Raw source SHA:
+832b074478ae06e6aade21b121a2be96a4b6ab1e367874466b6b502e2888be0b.
+Same prompt and same source AST as four-thread control (1978.139 s, 49/49).
+Only 1.35% lower wall time; no near-2x benefit observed, host/cache/budget differ.
+Public evidence: benchmarks/data/2026-11-24-motor-threads.json.
+
+Dispatcher state is now overnight_v2_running, matrix PID 6680, output
+results/project-overnight-20261124/matrix, source revision ca429e5. First revised
+pagination--qwen38-q4 claimed; eight threads, 7200 sec, 2048 output, prompt v2.
+Parent dispatcher remains PID 9724, session 24007. Do not launch competing jobs.
 
 ## New authorized work: Open-FDD-inspired project patches
 

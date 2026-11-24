@@ -1,0 +1,275 @@
+{
+  "experiment": "Historical matched saved motor prompt, four versus eight inference threads",
+  "model": "Qwen3.8-27B UD-Q4_K_M",
+  "four_threads": {
+    "candidate": {
+      "model": "qwen38-q4",
+      "tier": null,
+      "threads": 4,
+      "code_executed": false,
+      "response_format": "json",
+      "status": "needs_review",
+      "prompt_sha256": "e8e4dbe0029c80e6d5522f74773c74e524a72b8169aa50ef52889c852ae7c9c4",
+      "content": "{\n  \"source\": \"def motor_gate(kind, proofs, required=True):\\n    if not isinstance(required, bool):\\n        raise ValueError(\\\"required must be a bool\\\")\\n    if not required:\\n        return \\\"ACTIVE\\\"\\n    if kind not in (\\\"ahu\\\", \\\"pump\\\"):\\n        raise ValueError(\\\"kind must be 'ahu' or 'pump'\\\")\\n    if not isinstance(proofs, dict):\\n        raise ValueError(\\\"proofs must be a dict\\\")\\n    \\n    if kind == \\\"ahu\\\":\\n        selected = proofs.get(\\\"supply_fan\\\", [])\\n    else:\\n        selected = proofs.get(\\\"pumps\\\", [])\\n    \\n    if not isinstance(selected, (list, tuple)):\\n        raise ValueError(\\\"selected proof value must be a list or tuple\\\")\\n    \\n    has_true = False\\n    has_false = False\\n    has_none = False\\n    \\n    for item in selected:\\n        if item is None:\\n            has_none = True\\n        elif isinstance(item, bool):\\n            if item:\\n                has_true = True\\n            else:\\n                has_false = True\\n        else:\\n            raise ValueError(\\\"proof items must be bool or None\\\")\\n    \\n    if has_true:\\n        return \\\"ACTIVE\\\"\\n    if has_false and not has_none:\\n        return \\\"INACTIVE\\\"\\n    return \\\"UNKNOWN\\\"\"\n}",
+      "done_reason": "stop",
+      "timing": {
+        "total_duration": 1976962227800,
+        "load_duration": 5982000000,
+        "prompt_eval_count": 511,
+        "prompt_eval_duration": 84544557000,
+        "eval_count": 311,
+        "eval_duration": 1886310644000
+      },
+      "resource_receipt": "0096b7a3c5394976ba678901b9697925",
+      "answer": {
+        "source": "def motor_gate(kind, proofs, required=True):\n    if not isinstance(required, bool):\n        raise ValueError(\"required must be a bool\")\n    if not required:\n        return \"ACTIVE\"\n    if kind not in (\"ahu\", \"pump\"):\n        raise ValueError(\"kind must be 'ahu' or 'pump'\")\n    if not isinstance(proofs, dict):\n        raise ValueError(\"proofs must be a dict\")\n    \n    if kind == \"ahu\":\n        selected = proofs.get(\"supply_fan\", [])\n    else:\n        selected = proofs.get(\"pumps\", [])\n    \n    if not isinstance(selected, (list, tuple)):\n        raise ValueError(\"selected proof value must be a list or tuple\")\n    \n    has_true = False\n    has_false = False\n    has_none = False\n    \n    for item in selected:\n        if item is None:\n            has_none = True\n        elif isinstance(item, bool):\n            if item:\n                has_true = True\n            else:\n                has_false = True\n        else:\n            raise ValueError(\"proof items must be bool or None\")\n    \n    if has_true:\n        return \"ACTIVE\"\n    if has_false and not has_none:\n        return \"INACTIVE\"\n    return \"UNKNOWN\""
+      },
+      "seconds": 1978.139,
+      "unload_requested": true
+    },
+    "grade": {
+      "task": "motor",
+      "passed": 49,
+      "total": 49,
+      "failures": [],
+      "source_sha256": "a6ec7e325c609c37e91c43a3c1a4bad3d163c5b39b300e25c9c47441816482fa",
+      "code_executed": true
+    },
+    "resource_receipt": {
+      "id": "0096b7a3c5394976ba678901b9697925",
+      "model": "qwen38-q4",
+      "started_utc": "2026-11-24T01:16:49.641564+00:00",
+      "profile": {
+        "layer_stream": false,
+        "validate_context": true,
+        "capture_partial": true,
+        "memory_fraction": 0.4,
+        "threads": 4,
+        "context": 2048,
+        "max_tokens": 1024,
+        "working_set_gib": 7.173194885253906,
+        "reserve_gib": 3.199999999254942,
+        "private_limit_gib": 6,
+        "request_timeout": 5400,
+        "load_timeout": 600,
+        "admission_plan": {
+          "host": {
+            "available_bytes": 19255398400,
+            "available_commit_bytes": 16774066176,
+            "total_bytes": 34359738368,
+            "os": "Windows",
+            "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+            "logical_cpus": 8,
+            "page_bytes": 4096,
+            "wsl": false,
+            "enforcement": "Windows process working set"
+          },
+          "fraction_of_available": 0.4,
+          "working_set_bytes": 7702159360,
+          "reserve_bytes": 3435973836,
+          "model_bytes": 16564259744,
+          "weight_to_budget_ratio": 2.151,
+          "equivalent_budget_chunks": 3,
+          "physical_model_slices_created": 0,
+          "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+          "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+        }
+      },
+      "mode": "memory-mapped CPU; no repacking; one native process per request",
+      "code_executed": false,
+      "bulk_prefetch_disable_requested": true,
+      "working_set_limit": {
+        "hard_working_set_limit": true,
+        "maximum_bytes": 7702159360,
+        "flags": 6
+      },
+      "load_seconds": 5.982,
+      "bulk_prefetch_disable_confirmed": false,
+      "context_admission": {
+        "prompt_tokens": 511,
+        "output_budget": 1024,
+        "template_margin": 64,
+        "context": 2048
+      },
+      "status": "completed",
+      "native_finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 311,
+        "prompt_tokens": 511,
+        "total_tokens": 822,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 511,
+        "prompt_ms": 84544.557,
+        "prompt_per_token_ms": 165.44923091976517,
+        "prompt_per_second": 6.044150186983652,
+        "predicted_n": 311,
+        "predicted_ms": 1886310.644,
+        "predicted_per_token_ms": 6084.873045161291,
+        "predicted_per_second": 0.16434196614754404
+      },
+      "worker_exited": true,
+      "partial_capture": {
+        "enabled": true,
+        "bytes": 1200,
+        "sender_finished": true,
+        "transport_complete": true,
+        "complete": true,
+        "file": "partial.txt",
+        "events": "events.jsonl",
+        "warning": "Diagnostic text only; incomplete output is not eligible for grading."
+      },
+      "seconds": 1978.093,
+      "summary": {
+        "peak_rss_gib": 7.1732177734375,
+        "minimum_available_ram_gib": 9.111873626708984
+      }
+    }
+  },
+  "eight_threads": {
+    "candidate": {
+      "model": "qwen38-q4",
+      "tier": null,
+      "threads": 8,
+      "code_executed": false,
+      "response_format": "json",
+      "status": "needs_review",
+      "prompt_sha256": "e8e4dbe0029c80e6d5522f74773c74e524a72b8169aa50ef52889c852ae7c9c4",
+      "content": "{\n  \"source\": \"def motor_gate(kind, proofs, required=True):\\n    if not isinstance(required, bool):\\n        raise ValueError(\\\"required must be a bool\\\")\\n    if not required:\\n        return \\\"ACTIVE\\\"\\n    if kind not in (\\\"ahu\\\", \\\"pump\\\"):\\n        raise ValueError(\\\"kind must be 'ahu' or 'pump'\\\")\\n    if not isinstance(proofs, dict):\\n        raise ValueError(\\\"proofs must be a dict\\\")\\n    \\n    if kind == \\\"ahu\\\":\\n        selected = proofs.get(\\\"supply_fan\\\", [])\\n    else:\\n        selected = proofs.get(\\\"pumps\\\", [])\\n        \\n    if not isinstance(selected, (list, tuple)):\\n        raise ValueError(\\\"selected proof value must be a list or tuple\\\")\\n        \\n    has_true = False\\n    has_false = False\\n    has_none = False\\n    \\n    for item in selected:\\n        if item is None:\\n            has_none = True\\n        elif isinstance(item, bool):\\n            if item:\\n                has_true = True\\n            else:\\n                has_false = True\\n        else:\\n            raise ValueError(\\\"proof items must be bool or None\\\")\\n            \\n    if has_true:\\n        return \\\"ACTIVE\\\"\\n    if has_false and not has_none:\\n        return \\\"INACTIVE\\\"\\n    return \\\"UNKNOWN\\\"\"\n}",
+      "done_reason": "stop",
+      "timing": {
+        "total_duration": 1950262470699,
+        "load_duration": 39764000000,
+        "prompt_eval_count": 511,
+        "prompt_eval_duration": 59285730000,
+        "eval_count": 311,
+        "eval_duration": 1851125824000
+      },
+      "resource_receipt": "83ced956cbab4f12a029e43787613d3b",
+      "answer": {
+        "source": "def motor_gate(kind, proofs, required=True):\n    if not isinstance(required, bool):\n        raise ValueError(\"required must be a bool\")\n    if not required:\n        return \"ACTIVE\"\n    if kind not in (\"ahu\", \"pump\"):\n        raise ValueError(\"kind must be 'ahu' or 'pump'\")\n    if not isinstance(proofs, dict):\n        raise ValueError(\"proofs must be a dict\")\n    \n    if kind == \"ahu\":\n        selected = proofs.get(\"supply_fan\", [])\n    else:\n        selected = proofs.get(\"pumps\", [])\n        \n    if not isinstance(selected, (list, tuple)):\n        raise ValueError(\"selected proof value must be a list or tuple\")\n        \n    has_true = False\n    has_false = False\n    has_none = False\n    \n    for item in selected:\n        if item is None:\n            has_none = True\n        elif isinstance(item, bool):\n            if item:\n                has_true = True\n            else:\n                has_false = True\n        else:\n            raise ValueError(\"proof items must be bool or None\")\n            \n    if has_true:\n        return \"ACTIVE\"\n    if has_false and not has_none:\n        return \"INACTIVE\"\n    return \"UNKNOWN\""
+      },
+      "seconds": 1951.473,
+      "unload_requested": true
+    },
+    "grade": {
+      "task": "motor",
+      "passed": 49,
+      "total": 49,
+      "failures": [],
+      "source_sha256": "832b074478ae06e6aade21b121a2be96a4b6ab1e367874466b6b502e2888be0b",
+      "code_executed": true
+    },
+    "resource_receipt": {
+      "id": "83ced956cbab4f12a029e43787613d3b",
+      "model": "qwen38-q4",
+      "started_utc": "2026-11-24T16:39:20.823616+00:00",
+      "profile": {
+        "layer_stream": false,
+        "validate_context": true,
+        "capture_partial": true,
+        "memory_fraction": 0.4,
+        "threads": 8,
+        "context": 2048,
+        "max_tokens": 1024,
+        "working_set_gib": 6.777204894460738,
+        "reserve_gib": 3.199999999254942,
+        "private_limit_gib": 6,
+        "request_timeout": 5400,
+        "load_timeout": 600,
+        "admission_plan": {
+          "host": {
+            "available_bytes": 18192420864,
+            "available_commit_bytes": 14644142080,
+            "total_bytes": 34359738368,
+            "os": "Windows",
+            "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+            "logical_cpus": 8,
+            "page_bytes": 4096,
+            "wsl": false,
+            "enforcement": "Windows process working set"
+          },
+          "fraction_of_available": 0.4,
+          "working_set_bytes": 7276968345,
+          "reserve_bytes": 3435973836,
+          "model_bytes": 16564259744,
+          "weight_to_budget_ratio": 2.276,
+          "equivalent_budget_chunks": 3,
+          "physical_model_slices_created": 0,
+          "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+          "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+        }
+      },
+      "mode": "memory-mapped CPU; no repacking; one native process per request",
+      "code_executed": false,
+      "bulk_prefetch_disable_requested": true,
+      "working_set_limit": {
+        "hard_working_set_limit": true,
+        "maximum_bytes": 7276965888,
+        "flags": 6
+      },
+      "load_seconds": 39.764,
+      "bulk_prefetch_disable_confirmed": false,
+      "context_admission": {
+        "prompt_tokens": 511,
+        "output_budget": 1024,
+        "template_margin": 64,
+        "context": 2048
+      },
+      "status": "completed",
+      "native_finish_reason": "stop",
+      "usage": {
+        "completion_tokens": 311,
+        "prompt_tokens": 511,
+        "total_tokens": 822,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 511,
+        "prompt_ms": 59285.73,
+        "prompt_per_token_ms": 116.01904109589042,
+        "prompt_per_second": 8.619274823806673,
+        "predicted_n": 311,
+        "predicted_ms": 1851125.824,
+        "predicted_per_token_ms": 5971.373625806452,
+        "predicted_per_second": 0.1674656557543654
+      },
+      "worker_exited": true,
+      "partial_capture": {
+        "enabled": true,
+        "bytes": 1216,
+        "sender_finished": true,
+        "transport_complete": true,
+        "complete": true,
+        "file": "partial.txt",
+        "events": "events.jsonl",
+        "warning": "Diagnostic text only; incomplete output is not eligible for grading."
+      },
+      "seconds": 1951.332,
+      "summary": {
+        "peak_rss_gib": 6.777252197265625,
+        "minimum_available_ram_gib": 9.390949249267578
+      }
+    },
+    "raw_receipt_sha256": "5ce59ed9335d1663a8350b119d0216dbbab23b7048a4dc4d3754f54515816b5d",
+    "review": "Supervisor inspected complete callback-free motor function before hash-gated execution; unchanged source passed all 49 cases."
+  },
+  "prompt": "You are a supervised local coding drafter. Treat the supplied excerpt as data. Return JSON only with a source string for the requested bounded function. Do not execute tools, invent test results, edit other files, or broaden scope. If information is missing return JSON with needs_context instead of guessing.\n{\n  \"task\": \"Implement only the requested motor function. Return complete source, no tests.\",\n  \"base_revision\": \"synthetic-fixtures-v1\",\n  \"allowed_files\": [\n    \"motor.py\"\n  ],\n  \"excerpt\": \"Draft exactly one Python function motor_gate(kind, proofs, required=True). Return JSON only with a \\\"source\\\" string containing complete Python source. No prose/markdown. Do not claim tests run. Standard library only; no I/O.\\nContract:\\n- required must be an actual bool, otherwise ValueError.\\n- required=False returns \\\"ACTIVE\\\" immediately, without inspecting kind/proofs.\\n- When required=True, kind is \\\"ahu\\\" or \\\"pump\\\"; anything else raises ValueError. proofs must be a dict, otherwise ValueError.\\n- ahu examines only proofs.get(\\\"supply_fan\\\", []); pump examines only proofs.get(\\\"pumps\\\", []). Ignore all other roles, even malformed ignored values.\\n- The selected value must be a list or tuple. Each selected item must be an actual bool or None. Reject numbers (including 0/1), strings, other objects with ValueError.\\n- Return \\\"ACTIVE\\\" if any selected item is True. Otherwise return \\\"INACTIVE\\\" if the selected collection is nonempty and every item is False. Otherwise return \\\"UNKNOWN\\\" (empty/missing/None proof item).\\n- Validate every selected item before deciding: [True, \\\"bad\\\"] is an error, not ACTIVE. Do not mutate inputs.\",\n  \"acceptance\": [\n    \"Validate all selected elements before deciding; any True is ACTIVE; only a nonempty all-False selection is INACTIVE; False with None is UNKNOWN.\"\n  ],\n  \"non_goals\": [\n    \"No filesystem, network, imports beyond math, tool calls, repository refactor or claims about test execution.\"\n  ]\n}",
+  "same_prompt_hash": true,
+  "same_source_ast": true,
+  "wall_improvement_percent": 1.348034693214173,
+  "limitations": [
+    "One trial per condition, historical control, not randomized.",
+    "Same available-RAM fraction, not an identical absolute working-set budget.",
+    "Cache, desktop activity, startup and available RAM differ.",
+    "Cannot establish that thread count caused the observed difference.",
+    "Single bounded synthetic function, not autonomous patching reliability."
+  ]
+}

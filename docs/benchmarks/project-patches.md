@@ -125,6 +125,23 @@ settings can change a draft. Cache state, available RAM and run order still limi
 causal speed claims; report prompt and generation throughput separately. More
 threads cannot remove SSD/page-fault stalls and may affect desktop responsiveness.
 
+Completed saved-prompt motor check (same Qwen3.8 Q4 model and prompt hash):
+
+| Threads | Grade | Client wall | Output tokens | Generation tokens/s |
+| --- | ---: | ---: | ---: | ---: |
+| 4, historical control | 49/49 | 1978.139 s | 311 | 0.165 |
+| 8 | 49/49 | 1951.473 s | 311 | 0.168 |
+
+The eight-thread function was inspected before execution and passed unchanged.
+Both source ASTs are identical, despite whitespace differences. Client wall was
+only 1.35% lower, not close to twice as fast. Startup was 5.982 versus 39.764 s;
+prompt processing 84.545 versus 59.286 s; generation 1886.311 versus 1851.126 s.
+Actual working-set budgets differed (7.17 versus 6.78 GiB), because both used
+.40 of then-available RAM. This single historical pair does not establish a
+causal thread speedup. Windows reported eight physical/eight logical cores;
+eight is a sensible host limit, not proof that additional software threads help.
+Evidence: data/2026-11-24-motor-threads.json.
+
 ### Authorized overnight profile, revised prompt
 
 The user subsequently authorized a 120-minute deadline for overnight patch cycling.

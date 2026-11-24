@@ -10,6 +10,12 @@ eight-thread / 120-minute profile with concrete examples and more output space.
 That follow-up is pending, not a passing result. The earlier 49/49 motor scores
 below must not be presented as evidence that sophisticated patches already work.
 
+The matched motor thread follow-up passed 49/49 at eight threads in 1951.473 s,
+versus 1978.139 s at four: only 1.35% lower wall time in one historical pair.
+Both generated 311 tokens and identical source ASTs. Cache and actual RAM budgets
+differed; this is not proof of a causal speedup. Full evidence is in
+`benchmarks/data/2026-11-24-motor-threads.json`.
+
 ## Completed 90-minute retest
 
 After a three-hour supervisor wait, all three model attempts had finished and

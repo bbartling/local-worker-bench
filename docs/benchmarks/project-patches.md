@@ -84,8 +84,18 @@ experiment rather than changing the prompt partway through this comparison.
 
 ## Status
 
-Harness prepared; model results will be added after complete-source review and
-independent grading. No real Open-FDD patch or autonomous production result is claimed.
+The managed cohort is running. Qwen3.8 Q4's pagination request reached its
+90-minute deadline (5401.227 s client wall) without a complete patch. Its 3929-byte
+prefix is preserved and ungraded; peak process RSS was 6.58 GiB and minimum host
+available RAM was 7.60 GiB. Coder-Next Q4 is next. No patch has been accepted yet.
+The live publication snapshot is data/2026-11-24-project-patches.json; future
+requests remain pending rather than receiving invented grades.
+
+An earlier hidden launch lost its controller/client without a Python error log;
+its orphan worker was identified and stopped, and the ungraded interruption was
+preserved locally before an explicitly supervised replacement launch. Do not count
+that infrastructure interruption as an additional model correctness failure.
+No real Open-FDD patch or autonomous production result is claimed.
 
 ### Separate thread-count follow-up
 

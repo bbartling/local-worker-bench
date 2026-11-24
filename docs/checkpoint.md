@@ -29,6 +29,13 @@ trial on a completed task/model. Explicit --threads 8 setup and campaign flags
 are implemented; ordinary profiles still default to four. Do not run this
 concurrently with the matrix or change its active profile.
 
+First matrix outcome: Qwen3.8 Q4 pagination timed out after 5401.227 seconds,
+3929 bytes retained, no complete candidate and no coding grade. Owned worker
+exited; peak RSS 6.58 GiB, minimum available RAM 7.60 GiB. Coder-Next Q4
+pagination is now claimed. Public snapshot: benchmarks/data/2026-11-24-project-patches.json.
+Eight-thread setup is ready at results/project-patch-setup8-20261124/api-config.json;
+no eight-thread inference has started. Latest offline checks: 98 tests + selftest pass.
+
 ## Completed after the three-hour wait
 
 The handoff and finite cohort are finished. No further inference is scheduled.

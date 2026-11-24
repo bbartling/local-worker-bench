@@ -21,8 +21,12 @@ This is a revised profile/delegation comparison, not a thread-only ablation.
 Prepared config: results/project-patch-overnight-setup-20261124/api-config.json.
 Motor prompt: results/retest90-20261123/cohort/qwen38-q4-packet/motor.prompt.txt
 (SHA e8e4dbe0029c80e6d5522f74773c74e524a72b8169aa50ef52889c852ae7c9c4).
-Dispatcher must be launched only once after code checks/commit; use a fresh
-output folder and preserve all old evidence. No generated-source execution.
+Dispatcher is already launched once, PID 9724, managed exec session 24007,
+output results/project-overnight-20261124. It is waiting_for_legacy_pagination.
+Do not launch another dispatcher. Motor output will be motor8/ and the new
+matrix matrix/ beneath that folder. STOP in the dispatcher folder cancels its
+active/waiting stage and prevents subsequent stages. Preserve all old evidence.
+No generated-source execution. Source revision at launch: 6c3a33b.
 
 ## New authorized work: Open-FDD-inspired project patches
 

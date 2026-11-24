@@ -1,5 +1,9 @@
 # Paging evaluation: measurements and a fair next comparison
 
+Next comparison: [Open-FDD-inspired project patches](benchmarks/project-patches.md)
+adds pagination, telemetry gaps and a two-file export integration task. Its fixed
+tests and controls are separate from the motor-function results below.
+
 ## Completed 90-minute retest
 
 After a three-hour supervisor wait, all three model attempts had finished and

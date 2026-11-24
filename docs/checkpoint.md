@@ -1,5 +1,16 @@
 # Paging tool continuation checkpoint
 
+## New authorized work: Open-FDD-inspired project patches
+
+User requested going ahead with more sophisticated patching and regular commits
+and pushes. Open-FDD remains untouched. Three synthetic tasks (pagination,
+telemetry duration and two-file SI export) now have fixed tests, intentionally
+broken baselines and handwritten passing controls. See benchmarks/project-patches.md.
+The first-pass matrix is Qwen3.8 Q4, Coder-Next Q4 and Coder-Next F16, serial,
+four threads, 4096 context, 1024 output, .40 RAM, 90 minutes per request. No
+automatic source execution or repairs. Inspect and hash-grade complete files
+before accepting any result. Runtime details will be recorded after launch.
+
 ## Completed after the three-hour wait
 
 The handoff and finite cohort are finished. No further inference is scheduled.

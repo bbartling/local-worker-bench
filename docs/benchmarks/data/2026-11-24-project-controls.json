@@ -1,0 +1,187 @@
+{
+  "inference_started": false,
+  "controls_are_handwritten": true,
+  "models": {
+    "qwen38-q4": {
+      "repo": "unsloth/Qwen3.8-27B-GGUF",
+      "revision": "4af51b3542f775b0a8e4b310bfb3f17e01c306c9",
+      "all_sha256_verified": true,
+      "files": [
+        {
+          "path": "Qwen3.8-27B-UD-Q4_K_M.gguf",
+          "bytes": 16564259744,
+          "sha256": "1bce504dfecd84153666928a41d8a66706f0158d3a317bc5196b72819d7dc529"
+        }
+      ]
+    },
+    "coder-next-q4": {
+      "repo": "Qwen/Qwen3-Coder-Next-GGUF",
+      "revision": "b82fb7382639d97b38fa7672e526c760c2fb358e",
+      "all_sha256_verified": true,
+      "files": [
+        {
+          "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
+          "bytes": 15524827040,
+          "sha256": "6bcfc9f9c37901eeb92172e2ab871224dab36a453d263bcb2547f737409534da"
+        },
+        {
+          "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00002-of-00004.gguf",
+          "bytes": 14872168352,
+          "sha256": "817def0691ee9d08bf3dc4444be7aed29c9e52091e8fa9d97901ce7e7f6f01d3"
+        },
+        {
+          "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00003-of-00004.gguf",
+          "bytes": 14503294496,
+          "sha256": "23aa634d47dca9b4ca3ea249384e6f01951b24c83cdc076f37f6f43d6c99883f"
+        },
+        {
+          "path": "Qwen3-Coder-Next-Q4_K_M/Qwen3-Coder-Next-Q4_K_M-00004-of-00004.gguf",
+          "bytes": 3510702144,
+          "sha256": "249c768cc5f130dc731567d6edcbdacc48e14dec9e02c5dbe2b2185d2c5bdb2b"
+        }
+      ]
+    },
+    "coder-next-f16": {
+      "repo": "Qwen/Qwen3-Coder-Next-GGUF",
+      "revision": "b82fb7382639d97b38fa7672e526c760c2fb358e",
+      "all_sha256_verified": true,
+      "files": [
+        {
+          "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00001-of-00004.gguf",
+          "bytes": 49202919520,
+          "sha256": "b763aa9ecaa0e904f5f3d51dab813ff3acf329512d563dea9f6f1690a3afb17d"
+        },
+        {
+          "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00002-of-00004.gguf",
+          "bytes": 49296066560,
+          "sha256": "fdfc7030f9ad74536510aba1fb2a5f320e2707b117079942515e286fa3b456c7"
+        },
+        {
+          "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00003-of-00004.gguf",
+          "bytes": 48992048768,
+          "sha256": "7ecba5137cf69efe202875c852240b6c8d7cca58a4511e36bf48bf616134e617"
+        },
+        {
+          "path": "Qwen3-Coder-Next-F16/Qwen3-Coder-Next-00004-of-00004.gguf",
+          "bytes": 11967180896,
+          "sha256": "2123c5cf7674131123d736e2a780fcadfae01346056ade288ba399a38c164a10"
+        }
+      ]
+    }
+  },
+  "tasks": {
+    "pagination": {
+      "base_revision": "38de7f6ca52a3409b6cab301663fea90cc6042de2d0dc65292d4c453e4bf5f93",
+      "baseline": {
+        "passed": 3,
+        "total": 25,
+        "source_sha256": "38de7f6ca52a3409b6cab301663fea90cc6042de2d0dc65292d4c453e4bf5f93",
+        "failed_cases": [
+          "capped_offset_and_filters",
+          "token_then_offset",
+          "repeated_token",
+          "duplicate_within_page",
+          "duplicate_across_pages",
+          "early_empty",
+          "changing_total",
+          "more_than_total",
+          "terminal_bad_id",
+          "terminal_missing_id",
+          "bad_points",
+          "boolean_total",
+          "negative_total",
+          "bad_total_string",
+          "bad_token",
+          "token_after_total",
+          "page_cap_no_partial",
+          "invalid_cap_0",
+          "invalid_cap_-1",
+          "invalid_cap_True",
+          "invalid_cap_1.5",
+          "bad_response"
+        ]
+      },
+      "control": {
+        "passed": 25,
+        "total": 25,
+        "source_sha256": "6500d6cb973fc784826eb9e9ee61a73314ee0f3b3aad8e80b7996a37ddd88fd4",
+        "failed_cases": []
+      }
+    },
+    "telemetry": {
+      "base_revision": "92a71abf10d5511be94c682da4f35294b131e2d9f4b06d4a709ca3408decb66d",
+      "baseline": {
+        "passed": 4,
+        "total": 26,
+        "source_sha256": "92a71abf10d5511be94c682da4f35294b131e2d9f4b06d4a709ca3408decb66d",
+        "failed_cases": [
+          "empty",
+          "single",
+          "large_gap",
+          "unknown_left",
+          "off_counts_coverage",
+          "duplicate_last_wins",
+          "invalid_gap_0",
+          "invalid_gap_-1",
+          "invalid_gap_True",
+          "invalid_gap_'300'",
+          "invalid_gap_nan",
+          "invalid_gap_inf",
+          "invalid_gap_None",
+          "bad_single_state",
+          "bad_single_time",
+          "negative_time",
+          "infinite_time",
+          "nan_time",
+          "bad_row",
+          "late_bad_state",
+          "bad_container",
+          "invalid_overwritten_duplicate"
+        ]
+      },
+      "control": {
+        "passed": 26,
+        "total": 26,
+        "source_sha256": "2c49640d572e9b727e297b8beee844d39e5fd0f6911c1e2f21eb45f106b791c6",
+        "failed_cases": []
+      }
+    },
+    "export": {
+      "base_revision": "6fb8de1efd3457a2404a3700b5208fffe596ced6454a9833c4be0a4021025d73",
+      "baseline": {
+        "passed": 2,
+        "total": 23,
+        "source_sha256": "6fb8de1efd3457a2404a3700b5208fffe596ced6454a9833c4be0a4021025d73",
+        "failed_cases": [
+          "convert_F_32",
+          "convert_F_212",
+          "convert_C_-40",
+          "convert_Pa_12",
+          "convert_kPa_1.25",
+          "reject_'K'_None",
+          "reject_'f'_32",
+          "reject_None_1",
+          "reject_[]_1",
+          "reject_'C'_True",
+          "reject_'C'_'2'",
+          "reject_'C'_inf",
+          "reject_'Pa'_nan",
+          "ordered_rows_none_duplicates",
+          "export_invalid_id",
+          "export_invalid_late_invalid",
+          "conversion_is_delegated",
+          "reject_int_subclass",
+          "export_invalid_container",
+          "export_invalid_row",
+          "export_invalid_missing"
+        ]
+      },
+      "control": {
+        "passed": 23,
+        "total": 23,
+        "source_sha256": "32df51548847494b44e6d1cfb74c8f6d42be76189b3fac4abb7a71d6d80a1737",
+        "failed_cases": []
+      }
+    }
+  }
+}

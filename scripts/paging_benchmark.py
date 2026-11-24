@@ -45,7 +45,7 @@ if __name__=='__main__':
             if ok and isinstance(missing,str) and missing.strip():
                 store.finish(job_id,{'needs_context':missing,'candidate_file':target.name},'needs_context')
                 print(json.dumps({'job':job_id,'state':'needs_context'}),flush=True);break
-            if ok and isinstance(source,str):
+            if ok and isinstance(source,str) and source.strip():
                 raw=source.encode();(args.output/(task+'.py')).write_bytes(raw)
                 receipt={'candidate_sha256':hashlib.sha256(raw).hexdigest(),'resource_receipt':result.get('resource_receipt'),
                     'candidate_file':target.name,'style':args.style,'task':task,'model':args.model,'seconds':result['seconds']}

@@ -1,5 +1,53 @@
 # Paging tool continuation checkpoint
 
+## Active instruction: bounded 90-minute retest with partial capture
+
+User authorized one longer retest and continued testing of the new models, with
+no further timeout escalation if none can complete. The readiness gate is the
+same motor packet for Qwen3.8 Q4, Qwen3.8 BF16 and Coder-Next F16, in that order.
+Each gets 5400 seconds end to end, 1024 output tokens, four threads and the same
+.40 available-RAM fraction and reserve/private guards. Startup may use up to
+600 seconds of that total. The client has 30 seconds of transport grace.
+
+New profiles capture native SSE into partial.txt and events.jsonl per API receipt,
+while the public API still returns a non-streamed completed response. Every
+content delta is flushed. EOF, timeout and disconnect retain an ungraded prefix;
+completion requires a final finish marker and DONE. Failed API replies now carry
+receipt IDs through the helper client. Do not grade or apply partial source.
+
+The old Qwen3.8 Q4 motor attempt generated 279 tokens at about .16 tokens/s but
+lost its text because it used buffered transport. Its 1800-second result remains
+ungraded. The compact patch remains 25/25. Qwen3.8 BF16 is now fully verified and
+its legacy first patch request is already running. The F16 download resumed
+successfully after an incomplete partial response; all parts must verify first.
+
+Handoff controller (explicitly launched once): results/retest90-20261123/handoff.json.
+It waits for the legacy BF16 patch response, or its original start plus 90 minutes,
+then writes STOP to results/paging-precision40-20261123 and waits for that campaign
+lease to release. The new cohort is results/retest90-20261123/cohort, API port 11439.
+The older 6-hour campaign must not continue into further tasks after handoff.
+No claimed jobs or failed attempts are overwritten or automatically replayed.
+
+The new cohort uses --request-timeout 5400 --load-timeout 600 --tasks motor with
+all three new-model aliases. It generates candidates only and ends after the
+finite cohort. completed_model_count means complete source responses, not passed
+independent tests. If none completes it records stopped_without_completions:true
+and further_timeout_escalation:false, stops its API, and performs no more attempts.
+If candidates complete, the hosted supervisor must review and hash-grade them.
+
+Cancellation: create results/retest90-20261123/STOP for the handoff controller, or
+results/retest90-20261123/cohort/STOP once the cohort is running. Its normal stop
+also cancels the owned request. Downloads are independent. Runtime controller PID
+is recorded in results/paging-background/retest90-process.json. Inspect these
+files before starting any competing API or inference.
+
+The in-flight legacy request cannot be retroactively switched to SSE capture.
+It is allowed to finish, or is capped at the new 90-minute boundary; metrics and
+its final answer if available are preserved. Any later legacy task interrupted
+for the handoff is a supervisor cancellation, not a model quality failure.
+
+---
+
 ## Latest follow-up: Qwen3.8 Q4 is verified and tested
 
 - Qwen3.8 Q4 download is complete and SHA-verified. First .66-budget smoke failed

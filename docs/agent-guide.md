@@ -100,6 +100,16 @@ Use a new output directory when changing campaign settings; resume refuses chang
 model selections, budgets or timeouts. It waits for existing local worker leases
 before claiming another model. A stale lease needs supervisor inspection.
 
+The currently authorized retest is one identical motor packet per new model,
+90 minutes end to end, 1024 output tokens, four threads, .40 RAM fraction and
+unchanged reserve/private-memory guards. Native partial text is saved during
+generation. Each model receives one attempt, then the cohort stops; there is no
+automatic retry or higher timeout if none completes. A complete JSON source is
+only a readiness result; the hosted supervisor still inspects and grades it.
+`scripts/handoff_long_retest.py` preserves/caps the already-running legacy request
+at 90 minutes, then stops that older campaign and starts the new cohort. It does
+not interrupt a long request immediately just to upgrade its capture mechanism.
+
 If usage limits are observable, inspect them at milestones. On less than 10%
 remaining, commit a checkpoint with exact running download/job IDs and restart
 commands before stopping dependent work. A saved file cannot renew quotas or

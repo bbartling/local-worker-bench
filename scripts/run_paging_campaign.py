@@ -34,9 +34,12 @@ def main():
     p.add_argument('--models',nargs='+',choices=MODELS,default=list(MODELS))
     p.add_argument('--memory-fraction',type=float,default=.66)
     p.add_argument('--request-timeout',type=int,default=1800)
+    p.add_argument('--load-timeout',type=int,default=180)
+    p.add_argument('--tasks',nargs='+',choices=('patch','motor','elapsed'),default=['patch','motor','elapsed'])
     args=p.parse_args()
     if not .1<=args.memory_fraction<=.66:raise ValueError('Use memory fraction .10 through .66')
     if not 5<=args.request_timeout<=21600:raise ValueError('Request timeout must be 5 through 21600 seconds')
+    if not 5<=args.load_timeout<=600:raise ValueError('Load timeout must be 5 through 600 seconds')
     if len(args.models)!=len(set(args.models)):raise ValueError('Each model may be selected once')
     if not .1<=args.wait_hours<=48:raise ValueError('Finite campaign: .1 through 48 hours')
     if not args.backend.is_file():raise ValueError('Backend missing')
@@ -47,9 +50,13 @@ def main():
         'models':{name:{'state':'waiting_for_verified_download'} for name in args.models},
         'memory_fraction':args.memory_fraction,
         'request_timeout':args.request_timeout,
+        'load_timeout':args.load_timeout,
+        'tasks':args.tasks,
         'generated_code_executed':False,'automatic_acceptance':False}
     if (set(state['models'])!=set(args.models) or state.get('memory_fraction',.66)!=args.memory_fraction
-            or state.get('request_timeout',1800)!=args.request_timeout):
+            or state.get('request_timeout',1800)!=args.request_timeout
+            or state.get('load_timeout',180)!=args.load_timeout
+            or state.get('tasks',['patch','motor','elapsed'])!=args.tasks):
         raise ValueError('Campaign settings changed; preserve prior evidence and use a new output directory')
     if 'backend_executable_sha256' not in state:
         state['backend_executable_sha256']=hashlib.sha256(args.backend.read_bytes()).hexdigest()
@@ -59,9 +66,9 @@ def main():
     for name in args.models:
         manifest=json.loads((ROOT/'examples/paging'/f'{name}.download.json').read_text())
         profiles[name]={'files':[str((ROOT/'results/model-cache'/name/item['path']).resolve()) for item in manifest['files']],
-            'layer_stream':False,'validate_context':True,'memory_fraction':args.memory_fraction,
+            'layer_stream':False,'validate_context':True,'capture_partial':True,'memory_fraction':args.memory_fraction,
             'threads':4,'context':2048,'max_tokens':1024,'working_set_gib':4,'reserve_gib':6,
-            'private_limit_gib':6,'request_timeout':args.request_timeout,'load_timeout':180}
+            'private_limit_gib':6,'request_timeout':args.request_timeout,'load_timeout':args.load_timeout}
     config_path=args.output/'api-config.json'
     save(config_path,{'backend_executable':str(args.backend.resolve()),'models':profiles})
     manager=Manager(read_config(config_path.resolve()),args.output/'api-receipts')
@@ -95,12 +102,13 @@ def main():
                     smoke_body={'model':name,'messages':[{'role':'user','content':'Reply exactly READY.'}],
                         'stream':False,'think':False,'options':{'num_thread':4,'num_ctx':2048,'num_predict':8}}
                     with worker_lock():response=api(endpoint,'/api/chat',smoke_body,
-                        min(args.request_timeout,max(1,state['deadline_epoch']-time.time())))
+                        min(args.request_timeout+30,max(1,state['deadline_epoch']-time.time())))
                     save(args.output/(name+'.smoke.json'),response)
                     if response.get('message',{}).get('content')!='READY':raise ValueError('Smoke did not return exactly READY')
                     output=args.output/(name+'-packet')
                     command=[sys.executable,str(ROOT/'scripts/paging_benchmark.py'),'--endpoint',endpoint,
-                        '--model',name,'--style','packet','--output',str(output.resolve()),'--timeout',str(args.request_timeout)]
+                        '--model',name,'--style','packet','--output',str(output.resolve()),'--timeout',str(args.request_timeout+30),
+                        '--tasks',*args.tasks]
                     with (args.output/(name+'.client.log')).open('w',encoding='utf-8') as log:
                         child=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,
                             creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
@@ -109,6 +117,11 @@ def main():
                             if time.time()>=state['deadline_epoch']:raise TimeoutError('Campaign deadline reached')
                             time.sleep(1)
                         if child.returncode:raise RuntimeError('Candidate trial incomplete; inspect client and API receipts')
+                    for task in args.tasks:
+                        candidate=json.loads((output/(task+'.candidate.json')).read_text(encoding='utf-8'))
+                        source=candidate.get('answer',{}).get('source')
+                        if candidate.get('status')!='needs_review' or not isinstance(source,str) or not source.strip():
+                            raise RuntimeError('No complete coding source; inspect candidate including needs_context')
                     record.update(state='needs_review',output=output.name)
                 except Exception as e:
                     record.update(state='needs_supervisor',error=str(e))
@@ -119,7 +132,12 @@ def main():
                     record['finished_epoch']=time.time();save(state_path,state)
                     print(json.dumps({'model':name,**record}),flush=True)
             if not progressed:time.sleep(30)
-        state['finished_epoch']=time.time();save(state_path,state)
+        state['finished_epoch']=time.time()
+        state['completed_model_count']=sum(record['state']=='needs_review' for record in state['models'].values())
+        state['stopped_without_completions']=state['completed_model_count']==0
+        state['further_timeout_escalation']=False
+        state['quality_grading']='pending supervisor review; completion is not a passing coding score'
+        save(state_path,state)
     finally:
         if child is not None and child.poll() is None:child.terminate();child.wait(timeout=10)
         manager.shutdown();server.shutdown();server.server_close();thread.join(timeout=5)

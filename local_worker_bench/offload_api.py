@@ -39,6 +39,7 @@ def read_config(path):
         if not isinstance(name,str) or not name or len(name)>100: raise ValueError('Invalid model alias.')
         if type(profile.setdefault('layer_stream',False)) is not bool: raise ValueError('layer_stream must be a bool.')
         if type(profile.setdefault('validate_context',False)) is not bool:raise ValueError('validate_context must be a bool')
+        if type(profile.setdefault('capture_partial',False)) is not bool:raise ValueError('capture_partial must be a bool')
         fraction=profile.get('memory_fraction')
         if fraction is not None and (isinstance(fraction,bool) or not isinstance(fraction,(int,float)) or not .1<=fraction<=.66):
             raise ValueError('memory_fraction must be between .10 and .66')
@@ -176,7 +177,7 @@ class Manager:
             '--load-mode','mmap','--lazy-mode','on','--no-repack','--no-warmup','--cache-ram','0']
         if profile.get('layer_stream',False):command+=['--log-verbosity','5']
         if profile.get('validate_context',False):command+=['--no-context-shift']
-        process=None; began=time.monotonic()
+        process=None; sender=None; began=time.monotonic()
         try:
             env={k:v for k,v in os.environ.items() if not k.startswith('LLAMA_ARG_')}
             env.update(OMP_NUM_THREADS=str(profile['threads']),MKL_NUM_THREADS=str(profile['threads']),OPENBLAS_NUM_THREADS=str(profile['threads']))
@@ -190,7 +191,7 @@ class Manager:
                 self.active={'model':model,'pid':process.pid,'request_id':request_id}
                 if self.monitored_only: receipt['working_set_limit']={'hard_working_set_limit':False}
                 else: receipt['working_set_limit']=memory.set_working_set_limit(process.pid,int(profile['working_set_gib']*memory.GIB))
-                deadline=began+profile['load_timeout']
+                deadline=min(began+profile['load_timeout'],began+profile['request_timeout'])
                 while True:
                     self.observe(process,profile,receipt['samples'],began)
                     try:
@@ -200,6 +201,8 @@ class Manager:
                     time.sleep(.25)
                 receipt['load_seconds']=round(time.monotonic()-began,3)
                 receipt['bulk_prefetch_disable_confirmed']='LWB: bulk mmap prefetch disabled' in (folder/'backend.log').read_text(encoding='utf-8',errors='replace')
+                if time.monotonic()>=began+profile['request_timeout']:
+                    raise ApiError('Request deadline reached before generation.',504)
                 if profile.get('validate_context',False):
                     rendered=backend_request(port,'/apply-template',{'messages':native['messages'],
                         'chat_template_kwargs':{'enable_thinking':False}},timeout=10)
@@ -212,12 +215,21 @@ class Manager:
                     if len(tokens)+native['max_tokens']+64>profile['context']:
                         raise ApiError('Prompt plus output budget exceeds context; split or trim the task.',413)
                     self.observe(process,profile,receipt['samples'],began)
+                if time.monotonic()>=began+profile['request_timeout']:
+                    raise ApiError('Request deadline reached before generation.',504)
                 channel=queue.Queue()
                 def send():
-                    try: channel.put((True,backend_request(port,'/v1/chat/completions',native,profile['request_timeout'])))
+                    try:
+                        if profile.get('capture_partial',False):
+                            from .native_stream import request
+                            value=request(port,native,profile['request_timeout'],folder)
+                        else:value=backend_request(port,'/v1/chat/completions',native,profile['request_timeout'])
+                        channel.put((True,value))
                     except Exception as e: channel.put((False,e))
-                threading.Thread(target=send,daemon=True).start(); deadline=time.monotonic()+profile['request_timeout']
+                sender=threading.Thread(target=send,daemon=True);sender.start()
+                deadline=began+profile['request_timeout']
                 while True:
+                    if time.monotonic()>deadline:raise ApiError('Generation timed out; owned worker stopped.',504)
                     self.observe(process,profile,receipt['samples'],began)
                     try: good,value=channel.get(timeout=.25)
                     except queue.Empty:
@@ -238,6 +250,7 @@ class Manager:
                     'prompt_eval_duration':int(timings.get('prompt_ms',0)*1e6),'eval_duration':int(timings.get('predicted_ms',0)*1e6),
                     'resource_receipt':request_id,'code_executed':False}
         except Exception as e:
+            if isinstance(e,ApiError):e.resource_receipt=request_id
             receipt.update(status='error',error=str(e)); raise
         finally:
             if process is not None:
@@ -245,6 +258,15 @@ class Manager:
                 try: process.wait(timeout=5)
                 except subprocess.TimeoutExpired: process.kill(); process.wait(timeout=5)
                 receipt['worker_exited']=process.poll() is not None
+            if sender is not None:sender.join(timeout=2)
+            if profile.get('capture_partial',False):
+                partial=folder/'partial.txt'
+                receipt['partial_capture']={'enabled':True,'bytes':partial.stat().st_size if partial.exists() else 0,
+                    'sender_finished':sender is None or not sender.is_alive(),
+                    'transport_complete':receipt.get('status')=='completed',
+                    'complete':receipt.get('status')=='completed' and receipt.get('native_finish_reason')=='stop',
+                    'file':'partial.txt','events':'events.jsonl',
+                    'warning':'Diagnostic text only; incomplete output is not eligible for grading.'}
             self.active=None; self.process=None; receipt['seconds']=round(time.monotonic()-began,3)
             if receipt['samples']:
                 receipt['summary']={'peak_rss_gib':max(s['rss_bytes'] for s in receipt['samples'])/memory.GIB,
@@ -294,7 +316,7 @@ def handler_for(manager):
                     self.reply(200,{'done':True}); return
                 if self.path!='/api/chat': raise ApiError('Unknown endpoint.',404)
                 self.reply(200,manager.chat(body))
-            except ApiError as e: self.reply(e.status,{'error':str(e)})
+            except ApiError as e: self.reply(e.status,{'error':str(e),'resource_receipt':getattr(e,'resource_receipt',None)})
             except (OSError,ValueError,TypeError,KeyError) as e: self.reply(400,{'error':str(e)})
             except Exception: self.reply(500,{'error':'Worker failure; inspect local receipt.'})
     return Handler

@@ -112,7 +112,7 @@ def main(argv=None):
             files=verified_files(manifest)
             budget=plan(host_snapshot(),sum(item['bytes'] for item in manifest['files']),args.fraction)
             config={'backend_executable':str(args.backend.resolve()),'models':{manifest['model']:{
-                'files':files,'layer_stream':False,'validate_context':True,'threads':4,'context':2048,'max_tokens':1024,
+                'files':files,'layer_stream':False,'validate_context':True,'capture_partial':True,'threads':4,'context':2048,'max_tokens':1024,
                 'memory_fraction':args.fraction,'working_set_gib':budget['working_set_bytes']/2**30,
                 'reserve_gib':budget['reserve_bytes']/2**30,'private_limit_gib':6,
                 'request_timeout':args.request_timeout,'load_timeout':180}},'planning_receipt':budget}

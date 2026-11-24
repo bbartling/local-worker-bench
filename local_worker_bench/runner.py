@@ -32,6 +32,11 @@ def endpoint_url(value, allow_lan=False):
     return value.rstrip('/')
 
 
+class InferenceError(ValueError):
+    def __init__(self,status,detail,receipt=None):
+        super().__init__(f'Inference HTTP {status}: {detail}');self.resource_receipt=receipt
+
+
 def api(endpoint, path, body=None, timeout=30):
     data = None if body is None else json.dumps(body).encode('utf-8')
     headers={'Content-Type':'application/json'}
@@ -45,12 +50,12 @@ def api(endpoint, path, body=None, timeout=30):
             raw = response.read(2 * 1024 * 1024 + 1)
     except urllib.error.HTTPError as error:
         try:
-            detail=json.loads(error.read(4096)).get('error','Request rejected')
+            payload=json.loads(error.read(4096));detail=payload.get('error','Request rejected');receipt=payload.get('resource_receipt')
         except (ValueError,AttributeError):
-            detail='Request rejected'
+            detail='Request rejected';receipt=None
         finally:
             error.close()
-        raise ValueError(f'Inference HTTP {error.code}: {detail}') from error
+        raise InferenceError(error.code,detail,receipt) from error
     if len(raw) > 2 * 1024 * 1024:
         raise ValueError('Ollama response exceeds 2 MiB.')
     result = json.loads(raw)
@@ -136,6 +141,7 @@ def ask(args):
             ok = True
         except (OSError, ValueError) as exc:
             result['error'] = str(exc)
+            if getattr(exc,'resource_receipt',None):result['resource_receipt']=exc.resource_receipt
         finally:
             result['seconds'] = round(time.monotonic() - began, 3)
             try:

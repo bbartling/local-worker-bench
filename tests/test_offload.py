@@ -82,7 +82,7 @@ class OffloadTests(unittest.TestCase):
                 self.assertTrue((self.root/'.cache/local-worker-bench/inference.lock').exists())
             self.assertFalse((self.root/'.cache/local-worker-bench/offload-engine.lock').exists())
 
-    def run_fake(self,reply=None,low_after_start=False,load_error=False,limit_error=False,private_bytes=100):
+    def run_fake(self,reply=None,low_after_start=False,load_error=False,limit_error=False,private_bytes=100,health_delay=0):
         process=FakeProcess()
         available={'available_bytes':20*memory.GIB,'available_commit_bytes':20*memory.GIB}
         low=dict(available,available_bytes=memory.GIB)
@@ -90,6 +90,9 @@ class OffloadTests(unittest.TestCase):
             if path=='/apply-template':return {'prompt':'Synthetic rendered prompt'}
             if path=='/tokenize':return {'tokens':[1,2,3,4,5]}
             if path=='/health':
+                if health_delay:
+                    import time
+                    time.sleep(health_delay)
                 if load_error: raise OSError('Synthetic unready')
                 return {'status':'ok'}
             if isinstance(reply,Exception): raise reply
@@ -115,6 +118,25 @@ class OffloadTests(unittest.TestCase):
         self.assertIn('--no-repack',command); self.assertIn('--no-warmup',command)
         self.assertEqual(command[command.index('--load-mode')+1],'mmap')
         self.assertEqual(command[command.index('--threads')+1],'4')
+
+    def test_loading_consumes_request_deadline_before_generation(self):
+        self.config['models']['fixture'].update(capture_partial=True,request_timeout=.01)
+        with patch('local_worker_bench.native_stream.request') as send:
+            with self.assertRaisesRegex(offload_api.ApiError,'before generation'):self.run_fake(health_delay=.03)
+        send.assert_not_called()
+
+    def test_stream_disconnect_retains_partial_and_error_receipt(self):
+        self.config['models']['fixture']['capture_partial']=True
+        def interrupted(port,body,timeout,folder):
+            (folder/'partial.txt').write_text('unfinished',encoding='utf-8')
+            raise OSError('synthetic disconnect')
+        with patch('local_worker_bench.native_stream.request',side_effect=interrupted):
+            with self.assertRaises(offload_api.ApiError) as error:self.run_fake()
+        self.assertTrue(error.exception.resource_receipt)
+        receipt=json.loads(next((self.root/'receipts').glob('*/receipt.json')).read_text())
+        self.assertFalse(receipt['partial_capture']['complete'])
+        self.assertEqual(receipt['partial_capture']['bytes'],10)
+        self.assertTrue(receipt['worker_exited'])
 
     def test_context_admission_preserves_output_room(self):
         self.config['models']['fixture']['validate_context']=True
@@ -186,8 +208,7 @@ class OffloadTests(unittest.TestCase):
         with self.assertRaisesRegex(offload_api.ApiError,'shutting down'): self.manager.chat(self.body)
 
     def test_generation_timeout_stops_owned_worker(self):
-        self.config['models']['fixture']['request_timeout']=0
-        original=offload_api.backend_request
+        self.config['models']['fixture']['request_timeout']=.1
         def slow(port,path,body=None,timeout=5):
             if path=='/health': return {'status':'ok'}
             threading.Event().wait(.4)

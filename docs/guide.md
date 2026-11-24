@@ -65,6 +65,14 @@ Send that body to `POST http://127.0.0.1:11438/api/chat`. `GET /health`,
 The facade starts/stops an owned native process per request; replies include
 timings and a `resource_receipt` ID. It refuses tools, images, streaming and
 unregistered models. There are no public `/jobs/*` or agent-provider routes.
+New planner/campaign profiles set `capture_partial:true`. The public request
+still uses `stream:false`, but the facade reads native SSE internally and flushes
+`partial.txt` and `events.jsonl` under each resource-receipt directory as content
+arrives. A timeout/disconnect retains that prefix and records incomplete status.
+Partial text is diagnostic data, not code eligible for grading or application.
+The final answer and native timing/usage still use the normal complete response.
+The request deadline now includes model loading and preflight; clients receive
+a short transport grace so the server can return its timeout receipt.
 Supported generation options are `num_thread`, `num_ctx`, `num_predict` and
 `temperature:0`. Threads/context must match the profile; only the output allowance
 can be reduced per call. Other sampler settings are rejected, not silently ignored.

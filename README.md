@@ -16,6 +16,7 @@ pages stay in memory. The hosted agent plans, reviews, tests and accepts every p
 - Automatic admission budget: up to **66% of available RAM**, with a desktop reserve.
 - Local Ollama-shaped API over **llama.cpp**; bounded requests and worker cleanup.
 - Durable draft/review checkpoints, explicit prompt packets and independent grading.
+- Partial output saved during generation; incomplete drafts stay ungraded.
 - Linux planning is available; Linux/WSL inference qualification is a separate phase.
 
 ## Start

@@ -17,6 +17,7 @@ sys.path.insert(0,str(ROOT))
 from local_worker_bench.paging import verified_files
 from scripts.plan_gguf_partitions import inspect
 from local_worker_bench.pause import require_benchmark_enabled
+from local_worker_bench.model_readiness import wait_until_verified
 
 
 def inspect_pair(cache):
@@ -62,22 +63,43 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--legacy',type=Path,required=True);p.add_argument('--backend',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--wait-hours',type=float,default=24)
+    p.add_argument('--poll-seconds',type=int,default=3600,help='Sleep between download checks (default one hour)')
     args=p.parse_args()
     require_benchmark_enabled(ROOT)
-    if not .1<=args.wait_hours<=24:raise ValueError('Finite wait .1 through 24 hours')
+    if not .1<=args.wait_hours<=168:raise ValueError('Finite wait .1 through 168 hours')
+    if not 60<=args.poll_seconds<=3600:raise ValueError('poll-seconds must be 60..3600')
     args.output.mkdir(parents=True,exist_ok=False);record=args.output/'handoff.json'
     state={'state':'waiting_for_parent_and_verified_models','started_epoch':time.time(),
         'wait_deadline_epoch':time.time()+args.wait_hours*3600,'models':['qwen38-standard-q4','qwen38-f16'],
         'threads':8,'request_timeout':7200,'output_tokens':2048,'context':4096,'prompt_version':2,
+        'poll_seconds':args.poll_seconds,
         'generated_code_executed':False,'automatic_acceptance':False}
     save(record,state)
-    def cancelled():return any(p.exists() for p in (ROOT/'INFERENCE_PAUSED',args.output/'STOP',args.legacy/'STOP',args.legacy.parent/'STOP'))
+    stop_paths=(ROOT/'INFERENCE_PAUSED',args.output/'STOP',args.legacy/'STOP',args.legacy.parent/'STOP')
+    def cancelled():return any(p.exists() for p in stop_paths)
+    # Parent matrix must finish first (short poll); then hour-sleep per unfinished model.
     while time.time()<state['wait_deadline_epoch']:
         if cancelled():state['state']='cancelled';save(record,state);return 0
-        if ready(args.legacy,ROOT/'results/model-cache'):
-            if not (Path.home()/'.cache/local-worker-bench/paging-campaign.lock').exists():break
-        time.sleep(5)
+        if (args.legacy/'campaign.json').exists():
+            legacy=json.loads((args.legacy/'campaign.json').read_text())
+            if 'finished_epoch' in legacy:break
+        time.sleep(min(60,args.poll_seconds))
     else:state['state']='wait_deadline';save(record,state);return 0
+    for model in state['models']:
+        if cancelled():state['state']='cancelled';save(record,state);return 0
+        state['state']='waiting_for_verified_'+model;save(record,state)
+        if not wait_until_verified(ROOT,model,poll_seconds=args.poll_seconds,
+                deadline_epoch=state['wait_deadline_epoch'],stop_paths=stop_paths):
+            state['state']='cancelled' if cancelled() else 'wait_deadline';save(record,state);return 0
+    if (Path.home()/'.cache/local-worker-bench/paging-campaign.lock').exists():
+        state['state']='waiting_for_campaign_lock';save(record,state)
+        while time.time()<state['wait_deadline_epoch']:
+            if cancelled():state['state']='cancelled';save(record,state);return 0
+            if not (Path.home()/'.cache/local-worker-bench/paging-campaign.lock').exists():break
+            time.sleep(min(60,args.poll_seconds))
+        else:state['state']='wait_deadline';save(record,state);return 0
+    if not ready(args.legacy,ROOT/'results/model-cache'):
+        state['state']='wait_deadline';save(record,state);return 0
     save(args.output/'precision-inspection.json',inspect_pair(ROOT/'results/model-cache'))
     setup=args.output/'setup'
     command=[sys.executable,str(ROOT/'scripts/prepare_project_bench.py'),'--backend',str(args.backend.resolve()),

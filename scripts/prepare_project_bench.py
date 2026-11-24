@@ -13,7 +13,7 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.project_bench import TASKS,packet,render,grade,digest_files
-from local_worker_bench.paging import verified_files
+from local_worker_bench.paging import verified_files, default_threads
 from scripts.plan_gguf_partitions import inspect
 
 MODEL_CACHES={'qwen38-q4':'qwen38-q4','coder-next-q4':'qwen3-coder-next-q4',
@@ -49,21 +49,25 @@ def inspect_format(alias,files):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--backend',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
-    p.add_argument('--threads',type=int,choices=(4,8),default=4,help='8 requires explicit user authorization; default preserves desktop capacity')
-    p.add_argument('--timeout',type=int,choices=(5400,7200),default=5400)
+    p.add_argument('--threads',type=int,default=None,help='Override auto thread count (~66%% of affinity-visible CPUs)')
+    p.add_argument('--timeout',type=int,choices=(5400,7200),default=7200,help='End-to-end request deadline; default 120 minutes')
     p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=1024)
     p.add_argument('--models',nargs='+',choices=MODEL_CACHES,default=['qwen38-q4','coder-next-q4','coder-next-f16'])
     args=p.parse_args()
+    thread_choice=default_threads()
+    if args.threads is not None:
+        thread_choice={**thread_choice,'threads':args.threads,'override':True}
+    if not 1<=thread_choice['threads']<=128:raise ValueError('threads must be 1..128')
     if not args.backend.is_file():raise ValueError('Backend missing')
     args.output.mkdir(parents=True,exist_ok=False)
     config={'backend_executable':str(args.backend.resolve()),'models':{}}
-    evidence={'inference_started':False,'controls_are_handwritten':True,'models':{},'tasks':{}}
+    evidence={'inference_started':False,'controls_are_handwritten':True,'thread_selection':thread_choice,'models':{},'tasks':{}}
     for alias in args.models:
         cache=MODEL_CACHES[alias]
         manifest=json.loads((ROOT/'results/model-cache'/cache/'verified-manifest.json').read_text())
         files=verified_files(manifest)
         config['models'][alias]={'files':files,'layer_stream':False,'validate_context':True,
-            'capture_partial':True,'memory_fraction':.4,'threads':args.threads,'context':4096,'max_tokens':args.max_tokens,
+            'capture_partial':True,'memory_fraction':.66,'threads':thread_choice['threads'],'context':4096,'max_tokens':args.max_tokens,
             'working_set_gib':4,'reserve_gib':6,'private_limit_gib':6,'request_timeout':args.timeout,'load_timeout':600}
         evidence['models'][alias]={'repo':manifest.get('repo'),'revision':manifest.get('revision'),
             'all_sha256_verified':True,'files':[{k:item[k] for k in ('path','bytes','sha256')} for item in manifest['files']],

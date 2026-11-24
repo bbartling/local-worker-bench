@@ -7,11 +7,17 @@ import ast
 import copy
 import hashlib
 import importlib.util
+import inspect
 import json
 import math
 from pathlib import Path
 import sys
 import unittest
+
+SUITE_VERSION = 3
+SUITE_V1_TOTALS = {'pagination': 25, 'telemetry': 26, 'export': 23}
+SUITE_V3_TOTALS = {'pagination': 31, 'telemetry': 28, 'export': 27}
+
 
 TASKS = {
     'pagination': {
@@ -251,18 +257,21 @@ class Checks(unittest.TestCase):
     """Trusted tests; candidate code is manually reviewed and runs in a subprocess."""
     modules = None
 
-    def pager(self, responses, expected=None, error=False, filters=None, max_pages=20, inspect=None):
+    def pager(self, responses, expected=None, error=False, filters=None, max_pages=20, inspect=None, min_fetches=0, max_fetches=None):
         replies = copy.deepcopy(responses)
         seen = []
         original = copy.deepcopy(filters)
         def fetch(query):
             seen.append(copy.deepcopy(query))
             if len(seen) > len(replies):
-                raise AssertionError('unexpected extra fetch')
+                raise ValueError('unexpected extra fetch')
             return replies[len(seen)-1]
         if error:
             with self.assertRaises(ValueError):
                 self.modules['pager'].read_all(fetch, filters, max_pages)
+            self.assertGreaterEqual(len(seen), min_fetches)
+            if max_fetches is not None:
+                self.assertLessEqual(len(seen), max_fetches)
         else:
             self.assertEqual(self.modules['pager'].read_all(fetch, filters, max_pages), expected)
         self.assertEqual(filters, original)
@@ -296,7 +305,19 @@ def _row(id):
     return {'id': id}
 
 
-def tests(task, modules):
+def _fetch_transport_fail(case):
+    seen = []
+    def fetch(query):
+        seen.append(copy.deepcopy(query))
+        if len(seen) == 1:
+            return {'points': [_row('a')], 'totalCount': 2}
+        raise RuntimeError('transport')
+    with case.assertRaises((ValueError, RuntimeError)):
+        case.modules['pager'].read_all(fetch, None, 20)
+    case.assertEqual(len(seen), 2)
+
+
+def _build_tests(task, modules, version):
     suite = unittest.TestSuite()
     def add(name, callback):
         case = Checks('runTest')
@@ -305,7 +326,9 @@ def tests(task, modules):
         case._testMethodDoc = name
         suite.addTest(case)
     if task == 'pagination':
-        add('terminal_no_metadata', lambda t: t.pager([{'points':[_row('a')]}], [_row('a')]))
+        terminal = lambda t: t.pager([{'points':[_row('a')]}], [_row('a')],
+            inspect=lambda seen: (t.assertEqual(len(seen), 1), t.assertEqual(seen[0].get('pageSize'), 100), t.assertEqual(seen[0].get('pageOffset'), 0)))
+        add('terminal_no_metadata', terminal if version >= 3 else (lambda t: t.pager([{'points':[_row('a')]}], [_row('a')])))
         add('empty_total_zero', lambda t: t.pager([{'points':[], 'totalCount':0}], []))
         def offset(t):
             def check(seen):
@@ -313,7 +336,19 @@ def tests(task, modules):
                 t.assertTrue(all(x['pageSize']==100 and x['filter']=={'kind':'point'} for x in seen))
             t.pager([{'points':[_row('a'),_row('b')],'totalCount':'4'}, {'points':[_row('c')],'totalCount':4}, {'points':[_row('d')],'totalCount':4}], list(map(_row,'abcd')), filters={'filter':{'kind':'point'}}, inspect=check)
         add('capped_offset_and_filters', offset)
-        add('token_then_offset', lambda t: t.pager([{'points':[_row('a')],'totalCount':3,'nextPageToken':'x'}, {'points':[_row('b')],'totalCount':3}, {'points':[_row('c')],'totalCount':3}],list(map(_row,'abc')),inspect=lambda seen:(t.assertEqual(seen[1]['pageToken'],'x'),t.assertNotIn('pageToken',seen[2]))))
+        if version >= 3:
+            def token_then_offset(t):
+                def check(seen):
+                    t.assertEqual(seen[1]['pageToken'], 'x')
+                    t.assertNotIn('pageToken', seen[2])
+                    for req in seen:
+                        t.assertEqual(req.get('pageSize'), 100)
+                    t.assertIn('pageOffset', seen[1])
+                t.pager([{'points':[_row('a')],'totalCount':3,'nextPageToken':'x'}, {'points':[_row('b')],'totalCount':3}, {'points':[_row('c')],'totalCount':3}],
+                    list(map(_row,'abc')), inspect=check)
+            add('token_then_offset', token_then_offset)
+        else:
+            add('token_then_offset', lambda t: t.pager([{'points':[_row('a')],'totalCount':3,'nextPageToken':'x'}, {'points':[_row('b')],'totalCount':3}, {'points':[_row('c')],'totalCount':3}],list(map(_row,'abc')),inspect=lambda seen:(t.assertEqual(seen[1]['pageToken'],'x'),t.assertNotIn('pageToken',seen[2]))))
         add('token_without_total', lambda t: t.pager([{'points':[_row('a')],'nextPageToken':'x'}, {'points':[_row('b')]}],list(map(_row,'ab'))))
         for label, replies in {
             'repeated_token':[{'points':[_row('a')],'nextPageToken':'x'},{'points':[_row('b')],'nextPageToken':'x'}],
@@ -332,10 +367,31 @@ def tests(task, modules):
             'bad_token':[{'points':[],'nextPageToken':42}],
             'token_after_total':[{'points':[_row('a')],'totalCount':1,'nextPageToken':'x'}],
         }.items():
-            add(label, lambda t,r=replies:t.pager(r,error=True))
-        add('page_cap_no_partial',lambda t:t.pager([{'points':[_row('a')],'totalCount':2}],max_pages=1,error=True))
-        for cap in (0,-1,True,1.5):
-            add('invalid_cap_'+repr(cap),lambda t,c=cap:t.pager([],max_pages=c,error=True))
+            if version >= 3:
+                min_fetch = 2 if len(replies) > 1 else 1
+                add(label, lambda t,r=replies,m=min_fetch:t.pager(r,error=True,min_fetches=m))
+            else:
+                add(label, lambda t,r=replies:t.pager(r,error=True))
+        if version >= 3:
+            add('page_cap_no_partial',lambda t:t.pager([{'points':[_row('a')],'totalCount':2}],max_pages=1,error=True,min_fetches=1))
+        else:
+            add('page_cap_no_partial',lambda t:t.pager([{'points':[_row('a')],'totalCount':2}],max_pages=1,error=True))
+        caps = (0,-1,True,1.5) if version < 3 else (0,-1,True,1.5,1.0)
+        for cap in caps:
+            if version >= 3 and cap == 1.0:
+                add('invalid_cap_1.0', lambda t: t.pager([{'points': [_row('a')]}], max_pages=1.0, error=True, max_fetches=0))
+            else:
+                add('invalid_cap_'+repr(cap),lambda t,c=cap:t.pager([],max_pages=c,error=True))
+        if version >= 3:
+            add('bool_total_one_row', lambda t: t.pager([{'points':[_row('a')], 'totalCount': True}], error=True, min_fetches=1))
+            add('terminal_empty_id', lambda t: t.pager([{'points':[{'id': ''}]}], error=True, min_fetches=1))
+            add('exact_max_pages_success', lambda t: t.pager(
+                [{'points':[_row('a')], 'totalCount': 2, 'nextPageToken': 'tok'}, {'points':[_row('b')], 'totalCount': 2}],
+                list(map(_row, 'ab')), max_pages=2, inspect=lambda seen: t.assertEqual(len(seen), 2)))
+            add('off_by_one_cap', lambda t: t.pager(
+                [{'points':[_row('a')], 'totalCount': 3}, {'points':[_row('b')], 'totalCount': 3}],
+                error=True, max_pages=2, min_fetches=2))
+            add('fetch_failure_before_done', _fetch_transport_fail)
     elif task == 'telemetry':
         for label, rows, gap, expected in [
             ('empty',[],300,(0,0)),('single',[(0,True)],300,(0,0)),
@@ -351,6 +407,9 @@ def tests(task, modules):
             add(label,lambda t,r=rows,g=gap,e=expected:t.duration(r,g,e))
         for gap in (0,-1,True,'300',float('nan'),float('inf'),None):
             add('invalid_gap_'+repr(gap),lambda t,g=gap:t.duration([],g,error=True))
+        if version >= 3:
+            add('reject_state_zero', lambda t: t.duration([[0, 0], [60, True]], error=True))
+            add('list_rows_ok', lambda t: t.duration([[0, True], [60, False]], 300, (1 / 60, 1 / 60)))
         for label,rows in {
             'bad_single_state':[(0,1)],'bad_single_time':[(True,False)],
             'negative_time':[(-1,True)],'infinite_time':[(float('inf'),False)],
@@ -366,7 +425,16 @@ def tests(task, modules):
                 if e is None:t.assertIsNone(actual)
                 else:t.assertIs(type(actual),float);t.assertAlmostEqual(actual,e)
             add('convert_'+unit+'_'+repr(value),conversion)
-        for unit,value in [('K',None),('f',32),(None,1),([],1),('C',True),('C','2'),('C',float('inf')),('Pa',float('nan'))]:
+        rejects = [('K',None),('f',32),(None,1),([],1),('C',True),('C','2'),('C',float('inf')),('Pa',float('nan'))]
+        if version >= 3:
+            rejects = rejects + [('C', False), ('Pa', True)]
+            def negative_kpa(t):
+                actual = t.modules['units'].to_si(-1, 'kPa')
+                t.assertIs(type(actual), float)
+                t.assertAlmostEqual(actual, -1000.0)
+            add('negative_kpa_passthrough', negative_kpa)
+            add('export_invalid_non_string_id', lambda t: t.export([{'id': 1, 'value': 2, 'unit': 'C'}], error=True))
+        for unit,value in rejects:
             def invalid(t,u=unit,v=value):
                 with t.assertRaises(ValueError):t.modules['units'].to_si(v,u)
             add('reject_'+repr(unit)+'_'+repr(value),invalid)
@@ -390,7 +458,19 @@ def tests(task, modules):
     return suite
 
 
-def grade(task, folder, reviewed_sha256):
+def suite_sha256(version=SUITE_VERSION):
+    return hashlib.sha256((inspect.getsource(_build_tests) + f':v{version}').encode()).hexdigest()
+
+
+def tests_v1(task, modules):
+    return _build_tests(task, modules, 1)
+
+
+def tests(task, modules):
+    return _build_tests(task, modules, SUITE_VERSION)
+
+
+def grade(task, folder, reviewed_sha256, suite_version=SUITE_VERSION):
     files={name:(Path(folder)/name).read_bytes().decode('utf-8') for name in TASKS[task]['files']}
     if digest_files(files)!=reviewed_sha256:
         raise ValueError('Files changed since review')
@@ -401,10 +481,12 @@ def grade(task, folder, reviewed_sha256):
         for name in files:
             module=_load(name[:-3],Path(folder)/name);modules[name[:-3]]=module
             if name=='units.py':sys.modules['units']=module
-        result=unittest.TestResult();tests(task,modules).run(result)
+        suite = _build_tests(task, modules, suite_version)
+        result=unittest.TestResult();suite.run(result)
         failures=[{'case':str(case.shortDescription()),'traceback':error} for case,error in result.failures+result.errors]
         return {'task':task,'passed':result.testsRun-len(failures),'total':result.testsRun,'failures':failures,
-                'source_sha256':reviewed_sha256,'code_executed':True}
+                'source_sha256':reviewed_sha256,'code_executed':True,
+                'suite_version':suite_version,'suite_sha256':suite_sha256(suite_version)}
     finally:
         if previous is None:sys.modules.pop('units',None)
         else:sys.modules['units']=previous

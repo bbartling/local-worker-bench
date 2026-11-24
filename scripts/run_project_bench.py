@@ -17,6 +17,7 @@ from http.server import ThreadingHTTPServer
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.offload_api import Manager,handler_for,read_config
+from local_worker_bench.paging import default_threads
 from local_worker_bench.project_bench import TASKS,packet,render,validate_files,digest_files
 from local_worker_bench.runner import worker_lock
 from local_worker_bench.pause import require_benchmark_enabled
@@ -30,28 +31,35 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--config',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--models',nargs='+',required=True);p.add_argument('--tasks',nargs='+',choices=TASKS,default=list(TASKS))
-    p.add_argument('--port',type=int,default=11440);p.add_argument('--timeout',type=int,default=5400)
-    p.add_argument('--threads',type=int,choices=(4,8),default=4)
-    p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=1024)
-    p.add_argument('--prompt-version',type=int,choices=(1,2),default=1)
+    p.add_argument('--port',type=int,default=11440);p.add_argument('--timeout',type=int,default=7200,help='Default 120 minutes end-to-end')
+    p.add_argument('--threads',type=int,default=None,help='Default: ~66%% of visible logical CPUs')
+    p.add_argument('--memory-fraction',type=float,default=.66,help='Fraction of currently available RAM')
+    p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=2048)
+    p.add_argument('--prompt-version',type=int,choices=(1,2),default=2)
     p.add_argument('--hours',type=float,default=16)
     args=p.parse_args()
     require_benchmark_enabled(ROOT)
+    thread_info=default_threads()
+    if args.threads is None:
+        args.threads=thread_info['threads']
     if not 5<=args.timeout<=7200 or not .1<=args.hours<=24:raise ValueError('Finite deadlines required')
+    if isinstance(args.memory_fraction,bool) or not .1<=args.memory_fraction<=.66:raise ValueError('memory fraction .10 through .66 required')
+    if not 1<=args.threads<=128:raise ValueError('threads must be 1..128')
     if len(set(args.models))!=len(args.models) or len(set(args.tasks))!=len(args.tasks):raise ValueError('No repeated trials in one cohort')
     if any(not re.fullmatch(r'[a-z0-9_-]{1,64}',model) for model in args.models):raise ValueError('Use path-safe model aliases')
     config=read_config(args.config.resolve())
     for model in args.models:
         profile=config['models'][model]
-        if profile['threads']!=args.threads or profile['context']!=4096 or profile['max_tokens']!=args.max_tokens or profile['memory_fraction']!=.4 or not profile['capture_partial']:
-            raise ValueError('Use matched configured threads / 4096 context / configured output / .40 RAM / capture profiles')
+        if profile['threads']!=args.threads or profile['context']!=4096 or profile['max_tokens']!=args.max_tokens or profile['memory_fraction']!=args.memory_fraction or not profile['capture_partial']:
+            raise ValueError('Use matched configured threads / 4096 context / configured output / RAM fraction / capture profiles')
         if profile['request_timeout']!=args.timeout:raise ValueError('Client and server deadline must match')
     args.output.mkdir(parents=True,exist_ok=False)
     state={'source_revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'started_epoch':time.time(),'deadline_epoch':time.time()+args.hours*3600,
         'request_timeout':args.timeout,'context':4096,'output_tokens':args.max_tokens,'threads':args.threads,
+        'thread_selection':thread_info if args.threads==thread_info['threads'] else {'threads':args.threads,'override':True},
         'prompt_version':args.prompt_version,
-        'memory_fraction':.4,'trials':{},'generated_code_executed':False,'automatic_repairs':False,
+        'memory_fraction':args.memory_fraction,'suite_version':3,'trials':{},'generated_code_executed':False,'automatic_repairs':False,
         'config_sha256':hashlib.sha256(args.config.read_bytes()).hexdigest(),
         'backend_sha256':hashlib.sha256(Path(config['backend_executable']).read_bytes()).hexdigest()}
     save(args.output/'campaign.json',state)

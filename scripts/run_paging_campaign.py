@@ -20,6 +20,7 @@ from local_worker_bench.offload_api import Manager,handler_for,read_config
 from local_worker_bench.paging import verified_files
 from local_worker_bench.runner import api,worker_lock
 from local_worker_bench.pause import require_benchmark_enabled
+from local_worker_bench.model_readiness import MODEL_CACHES, wait_until_verified
 
 MODELS=('qwen38-q4','qwen38-bf16','coder-next-f16')
 
@@ -37,8 +38,10 @@ def main():
     p.add_argument('--request-timeout',type=int,default=1800)
     p.add_argument('--load-timeout',type=int,default=180)
     p.add_argument('--tasks',nargs='+',choices=('patch','motor','elapsed'),default=['patch','motor','elapsed'])
+    p.add_argument('--poll-seconds',type=int,default=3600,help='Sleep between download checks (default one hour)')
     args=p.parse_args()
     require_benchmark_enabled(ROOT)
+    if not 60<=args.poll_seconds<=3600:raise ValueError('poll-seconds must be 60..3600')
     if not .1<=args.memory_fraction<=.66:raise ValueError('Use memory fraction .10 through .66')
     if not 5<=args.request_timeout<=21600:raise ValueError('Request timeout must be 5 through 21600 seconds')
     if not 5<=args.load_timeout<=600:raise ValueError('Load timeout must be 5 through 600 seconds')
@@ -94,11 +97,14 @@ def main():
             progressed=False
             for name in waiting:
                 if stop_path.exists() or time.time()>=state['deadline_epoch']:break
-                record=state['models'][name];manifest_path=ROOT/'results/model-cache'/name/'verified-manifest.json'
-                if not manifest_path.exists():continue
-                # Persist claim before any model work. Never replay a claimed job.
+                record=state['models'][name]
+                # Hour-sleep until this alias verifies; then claim. Never replay a claimed job.
+                if not wait_until_verified(ROOT,name,poll_seconds=args.poll_seconds,
+                        deadline_epoch=state['deadline_epoch'],stop_paths=(stop_path,ROOT/'INFERENCE_PAUSED')):
+                    break
                 record.update(state='claimed',started_epoch=time.time());save(state_path,state);progressed=True
                 try:
+                    manifest_path=ROOT/'results/model-cache'/MODEL_CACHES.get(name,name)/'verified-manifest.json'
                     manifest=json.loads(manifest_path.read_text());files=verified_files(manifest)
                     if files!=profiles[name]['files']:raise ValueError('Verified paths differ from registered files')
                     smoke_body={'model':name,'messages':[{'role':'user','content':'Reply exactly READY.'}],

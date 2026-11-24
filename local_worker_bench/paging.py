@@ -9,6 +9,21 @@ import platform
 from . import memory
 
 
+def affinity_cpus():
+    try:
+        return len(os.sched_getaffinity(0))
+    except (AttributeError, NotImplementedError, OSError):
+        return os.cpu_count() or 1
+
+
+def default_threads(fraction=.66):
+    if isinstance(fraction, bool) or not isinstance(fraction, (int, float)) or not math.isfinite(fraction) or not 0 < fraction <= 1:
+        raise ValueError('fraction must be in (0, 1]')
+    visible = affinity_cpus()
+    threads = max(1, min(visible, round(visible * fraction)))
+    return {'visible_logical_cpus': visible, 'fraction': fraction, 'threads': threads, 'source': 'affinity' if hasattr(os, 'sched_getaffinity') else 'cpu_count'}
+
+
 def host_snapshot():
     observed=memory.available_memory()
     if os.name=='nt':

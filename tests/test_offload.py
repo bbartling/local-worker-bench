@@ -46,7 +46,7 @@ class OffloadTests(unittest.TestCase):
         offload_api.validate_chat(dict(self.body,options={'num_thread':8}),models)
         with self.assertRaises(offload_api.ApiError):
             offload_api.validate_chat(dict(self.body,options={'num_thread':4}),models)
-        config['models']['fixture']['threads']=9;path.write_text(json.dumps(config))
+        config['models']['fixture']['threads']=129;path.write_text(json.dumps(config))
         with self.assertRaises(ValueError):offload_api.read_config(path)
 
     def test_explicit_overnight_timeout_is_bounded(self):

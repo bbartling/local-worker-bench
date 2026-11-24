@@ -35,6 +35,29 @@ Runtime results, native binaries and weights are ignored, local files, not in Gi
 
 ## Model matrix and downloads still running
 
+**Ready-first policy (after explicit inference resume):** run verified aliases
+before unfinished downloads. When a later cell’s turn arrives and
+`verified-manifest.json` is missing, sleep in **1-hour** poll cycles until
+verification completes, STOP, or campaign deadline. Do not start a duplicate
+download writer. Check live state with
+`python scripts/report_model_readiness.py`.
+
+**New project-patch defaults (do not relabel old runs):** **120-minute**
+end-to-end timeout, **~66% of currently available RAM**, **~66% of visible
+logical CPUs** as threads (5 on this 8-CPU PC). Overrides allowed. Historical
+matrices used 90 min / .40 RAM / 4 or 8 threads—keep those labeled separately.
+Plain-language explanation: `docs/reports/os-paging-research.pdf`.
+
+| Wave | Alias | Role | Gate |
+| --- | --- | --- | --- |
+| A (ready) | `coder-next-q4` | Qwen-published Q4 | verified |
+| A (ready) | `coder-next-f16` | Qwen-published FP16 pair | verified |
+| A (ready) | `qwen38-q4` | Unsloth UD-Q4 **appendix** (not standard-Q4 column) | verified |
+| A (ready) | `qwen38-bf16` | BF16 feasibility only (prior motor timeout) | verified |
+| B (later) | `qwen38-standard-q4` | Standard Q4 control | hour-sleep until verified |
+| B (later) | `qwen38-f16` | Matched FP16 for that Q4 | hour-sleep until verified |
+| B (later) | `coder-next-bf16` | BF16 side arm | hour-sleep until verified |
+
 | Family / format | Alias | Decimal GB | State at handoff |
 | --- | --- | ---: | --- |
 | Qwen3.8 standard Q4_K_M | qwen38-standard-q4 | 16.81 | Downloading |
@@ -196,11 +219,11 @@ python -m local_worker_bench selftest
 git diff --check
 ```
 
-The illustrated PDF is `docs/reports/os-paging-guide.pdf`, eight pages, maximum ten.
-Builder: `scripts/build_paging_report.py`. Normal Python lacks reportlab on this
-machine; the Codex bundled Python has it. Use that existing runtime or a project
-venv, render with Poppler and visually inspect changed pages. Do not hand over
-an overflowing/orphaned report. Refresh actual findings, not pending-model scores.
+Human-facing research note (Typst, ≤6 pages): `docs/reports/os-paging-research.pdf`
+from `docs/reports/typst/main.typ` (`typst compile ...`). The older illustrated
+PDF `docs/reports/os-paging-guide.pdf` (ReportLab, `scripts/build_paging_report.py`)
+remains for agent context; prefer the Typst note for people. Do not hand over an
+overflowing report. Refresh actual findings, not pending-model scores.
 
 Finish the critique/resource-default work offline, keep commits/pushes small and
 honest, and wait for the user before spending more inference time. Full continuation

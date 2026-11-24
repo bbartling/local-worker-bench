@@ -47,7 +47,7 @@ def read_config(path):
         files=profile.get('files')
         if not isinstance(files,list) or not files: raise ValueError('Register all GGUF split files, in order.')
         profile['files']=[str((path.parent/Path(f)).resolve()) if not Path(f).is_absolute() else f for f in files]
-        for key,default,low,high in [('threads',4,1,8),('context',2048,512,8192),('max_tokens',640,1,2048),
+        for key,default,low,high in [('threads',4,1,128),('context',2048,512,8192),('max_tokens',640,1,2048),
                                     ('request_timeout',600,5,21600),('load_timeout',180,5,600),
                                     ('working_set_gib',8,0.05,24),('reserve_gib',6,2,1024),
                                     ('private_limit_gib',6 if profile['layer_stream'] else 16,1,16)]:

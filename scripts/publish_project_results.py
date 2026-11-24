@@ -12,7 +12,7 @@ import time
 
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-from local_worker_bench.project_bench import TASKS,digest_files
+from local_worker_bench.project_bench import TASKS,digest_files,SUITE_VERSION,suite_sha256,SUITE_V1_TOTALS,SUITE_V3_TOTALS
 
 
 def publish(folder):
@@ -47,6 +47,19 @@ def publish(folder):
                 grade=json.loads(grade_path.read_text());files=candidate.get('answer',{}).get('files')
                 if not isinstance(files,dict) or digest_files(files)!=record.get('source_sha256') or grade.get('source_sha256')!=record['source_sha256']:
                     raise ValueError('Candidate/grade bundle mismatch')
+                if 'suite_version' in grade:
+                    if grade['suite_version']==SUITE_VERSION:
+                        if grade.get('suite_sha256')!=suite_sha256(SUITE_VERSION):
+                            raise ValueError('Grade suite hash mismatch')
+                        expected=state.get('suite_version',SUITE_VERSION)
+                        if grade['suite_version']!=expected:
+                            raise ValueError('Grade suite version mismatch')
+                        if grade.get('total')!=SUITE_V3_TOTALS.get(record['task']):
+                            raise ValueError('Suite 3 grade total mismatch')
+                    elif grade['suite_version']!=1:
+                        raise ValueError('Unknown suite version in grade')
+                    elif grade.get('total')!=SUITE_V1_TOTALS.get(record['task']):
+                        raise ValueError('Frozen v1 grade total mismatch')
                 disk={name:(trial/'candidate'/name).read_bytes().decode('utf-8') for name in TASKS[record['task']]['files']}
                 if disk!=files:raise ValueError('Saved source differs from model response')
                 if item['packet']['base_revision']!=record['base_revision'] or digest_files(TASKS[record['task']]['files'])!=record['base_revision']:

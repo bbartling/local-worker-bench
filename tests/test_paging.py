@@ -1,5 +1,8 @@
+import os
 import unittest
-from local_worker_bench.paging import plan
+from unittest.mock import patch
+
+from local_worker_bench.paging import plan, default_threads, affinity_cpus
 
 
 class PagingPlanTests(unittest.TestCase):
@@ -19,3 +22,11 @@ class PagingPlanTests(unittest.TestCase):
     def test_invalid_fractions_rejected(self):
         for value in (True,float('nan'),float('inf'),.67,0,-1):
             with self.subTest(value=value),self.assertRaises(ValueError):plan(self.snapshot(),100,value)
+
+    def test_default_threads_from_visible_cpus(self):
+        for visible, expected in ((1, 1), (2, 1), (8, 5), (12, 8), (24, 16)):
+            with self.subTest(visible=visible), patch.object(os, 'cpu_count', return_value=visible), \
+                    patch('local_worker_bench.paging.affinity_cpus', return_value=visible):
+                picked = default_threads()['threads']
+                self.assertEqual(picked, expected)
+        self.assertGreaterEqual(affinity_cpus(), 1)

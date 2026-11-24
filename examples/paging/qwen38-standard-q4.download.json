@@ -1,0 +1,12 @@
+{
+  "model": "qwen38-standard-q4",
+  "repo": "prithivMLmods/Qwen3.8-27B-GGUF",
+  "revision": "3ccdd49b1030d9ce891e42e817ece300ae278562",
+  "files": [
+    {
+      "path": "Qwen3.8-27B.Q4_K_M.gguf",
+      "bytes": 16810714432,
+      "sha256": "77f1184292945eef06f7d5af1571ec92a3053ec257d7f60b46ae8288940c5bcd"
+    }
+  ]
+}

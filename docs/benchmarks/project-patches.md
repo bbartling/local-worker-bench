@@ -171,3 +171,28 @@ supervisor still owns inspection, tests, any one targeted repair and acceptance.
 No generated tests, source execution or unattended patch acceptance is added.
 STOP in the dispatcher's output prevents further stages and cancels its active
 stage. The old and new outputs are separate and no claimed job is replayed.
+
+### Qwen3.8 FP16 extension
+
+The user requested Q4 and FP16 for both model families. Existing Qwen3.8 BF16
+does not satisfy FP16. Public, pinned prithivMLmods/Qwen3.8-27B-GGUF artifacts
+are downloading: FP16 54,657,733,952 bytes and standard Q4_K_M 16,810,714,432
+bytes. Both use revision 3ccdd49b1030d9ce891e42e817ece300ae278562; SHA-256 and
+exact filenames are in examples/paging/qwen38-{f16,standard-q4}.download.json.
+The old Unsloth UD Q4 remains additional evidence, not the standard precision control.
+
+`scripts/queue_precision_extension.py` waits at most 24 hours for both verified
+downloads and completion/shutdown of the active revised matrix. It reads GGUF
+headers without loading weights, checks real F16/F32 versus Q4_K tensor types,
+requires matching tensor names/shapes and records chat-template hashes. It then
+prepares a separate two-model/three-task extension using the same revised prompts,
+eight threads, 4096 context, 2048 output, 120 minutes, .40 RAM and unchanged tests.
+The extension has its own 24-hour ceiling, no automatic repairs or acceptance.
+The completed Coder-Next Q4/F16 runs from the preceding revised matrix form the
+other half of the four-way comparison. Run order/cache remain uncontrolled.
+
+Parent cancellation or a STOP in the extension folder prevents queued inference;
+downloads are independent. It never restarts/replays the parent matrix. Concurrent
+downloads can affect timing in the parent, so report that overlap rather than a
+clean precision-only speed claim. Publisher card:
+https://huggingface.co/prithivMLmods/Qwen3.8-27B-GGUF.

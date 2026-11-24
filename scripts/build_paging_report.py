@@ -65,7 +65,7 @@ class Weights(Flowable):
         c.setFont('Helvetica',8);c.drawString(290,49,'Needed pages + live inference state')
 
 
-page(1,'Big model. Small workbench.','One computer, CPU inference and operating-system paging. Prepared for Ben, 23 November 2026.')
+page(1,'Big model. Small workbench.','One computer, CPU inference and operating-system paging. Prepared for Ben, 24 November 2026.')
 story.append(Weights())
 h('What is a model?')
 p('A model is a numerical program: learned weight arrays plus an architecture that tells the engine how to compute with them. A tokenizer turns text into token IDs. The CPU computes through layers, retains live state and predicts successive output tokens.')
@@ -92,7 +92,7 @@ p('New profiles also render/tokenize chat before generation, reserving the reque
 table(['Illustrative available RAM','66% before reserve/ceiling checks'],[('6 GiB','3.96 GiB'),('12 GiB','7.92 GiB'),('24 GiB','15.84 GiB')],[230,250])
 p('For a 45.09 GiB checkpoint and 10 GiB residency budget, five budget-sized portions are an explanatory ratio only. They are not actual cutting lines. The OS can retain or reclaim different pages as execution proceeds.')
 h('Guard more than process RSS')
-p('Four threads, one worker, fixed context and short output keep work bounded. The watchdog monitors available host RAM, commit, private bytes and observed working set, then stops its owned process on failure. Completed requests unload. Runtime state and shared file cache still cost memory.')
+p('Four threads by default, one worker and fixed context/output keep work bounded. Eight threads are explicitly authorized for the overnight comparison. The watchdog monitors available host RAM, commit, private bytes and observed working set, then stops its owned process on failure. Completed requests unload. Shared file cache still costs memory.')
 note('A 66% heuristic is not a capacity guarantee. Start with a small smoke request. No application closing, global swap/pagefile tuning or automatic model escalation occurs. Hard limit behavior differs across operating systems.')
 
 page(4,'API: a familiar local request','The request stays small. Memory policy belongs to the registered server profile.')
@@ -124,7 +124,7 @@ table(['Measured condition','Quality','Request wall'],[
     ('80B Q4 / OS paging','Elapsed: 40/46','711.886 s'),
     ('One supervised local motor repair','49/49 after 47/49','233.143 s client')],[240,125,115])
 p('These prior measurements used a 4 GiB process cap, four CPU threads and 2048 context. The broader first-pass total was 87/95; the separate compact patch is not included. Historical 30B scored 88/95 under different prompt conditions, so bigger did not automatically win.')
-p('The fresh .66-budget campaign tests explicit task packets. It runs while new weights download, so timings have competing I/O and are not a clean speed comparison. Structured packets also add edge-case information; an improvement cannot be attributed solely to formatting.')
+p('The earlier .66-budget campaign tested explicit task packets while weights downloaded. Its timings have competing I/O and are not a clean speed comparison. Structured packets also added edge-case information; improvements cannot be attributed solely to formatting.')
 new=ROOT/'docs/benchmarks/data/2026-11-23-paging-packets.json'
 if new.exists():
     d=json.loads(new.read_text());rows=[]
@@ -143,35 +143,40 @@ p('Full retained evidence and limitations: docs/evaluation.md and docs/benchmark
 page(7,'Models and precision: compare fairly','The existing 80B Q4 is Qwen3-Coder-Next, not a separate third model.')
 table(['Candidate','Weight storage','Current evidence'],[
     ('Coder-Next Q4_K_M / Qwen','48.41 GB','Verified; measured coding above'),
-    ('Coder-Next F16 / Qwen','159.46 GB','Download started; no F16 grade'),
-    ('Qwen3.8-27B UD-Q4_K_M / Unsloth','16.56 GB','Verified; compact patch 25/25'),
-    ('Qwen3.8-27B BF16 / Unsloth','54.66 GB','Download started; no BF16 grade')],[235,100,145])
-p('Q4 uses compressed block quantization; F16 and BF16 are distinct 16-bit floating formats. More precision increases storage and potential paging traffic, but does not guarantee a better accepted patch. Converting quantized weights back to 16-bit cannot restore lost precision. The community UD quantization also differs from Qwen Q4_K_M.')
-p('Qwen3.8 Q4 first hit the desktop reserve at the .66 budget. A later .40-budget smoke passed; its compact patch passed 25/25 in 284.9 seconds. Broader coding scores remain pending. Host availability changed too: retain both attempts rather than claiming a controlled speed gain. The reserve guard was not relaxed.')
-h('Ordered test gates')
-p('Verify pinned hashes and actual tensor types. Try load/smoke, then the compact patch and the same motor/elapsed contracts. Keep sampling, context, output budget and backend fixed. Record every incompatible load, timeout and guard failure. Only then try a disposable real patch and one reviewed repair.')
+    ('Coder-Next F16 / Qwen','159.46 GB','Verified; motor 49/49'),
+    ('Qwen3.8-27B UD-Q4_K_M / Unsloth','16.56 GB','Verified; motor 49/49'),
+    ('Qwen3.8 standard Q4 / prithivMLmods','16.81 GB','Downloading; not graded'),
+    ('Qwen3.8 FP16 / prithivMLmods','54.66 GB','Downloading; not graded')],[235,100,145])
+p('Q4 uses compressed block quantization; FP16 and BF16 are distinct 16-bit floating formats. Cached BF16 is not our requested FP16 control. The new Qwen3.8 standard-Q4/FP16 pair is pinned to one publisher revision; UD Q4 remains separate. More precision can increase paging without improving accepted patches. Expanding Q4 to 16-bit cannot recover lost precision.')
+h('Passing a function is not passing a project')
+p('The motor task passed 49/49 first try for Qwen3.8 Q4 in 33 minutes and Coder-Next F16 in 42 minutes. BF16 timed out at 90 minutes. The harder pagination patch then produced no accepted first patch:')
+table(['Four-thread pagination','Result','Request wall'],[
+    ('Qwen3.8 Q4','Timeout; ungraded','90.0 min'),
+    ('Coder-Next Q4','Asked for examples; no patch','5.4 min'),
+    ('Coder-Next F16','20/25 checks; rejected','81.9 min')],[195,200,85])
+p('These are fixed synthetic projects inspired by Open-FDD, not changes to that application. Frozen checks cover offset/token paging, telemetry gaps and a two-file SI export. Sources are inspected before execution. Preserve missing-context replies, timeouts and failures; do not rank by completion alone.')
 note('No model is universally compatible. Architecture, tokenizer, chat template, quantization, workspace and live state must be supported. Dense models may reread far more weights per token than selected-expert MoE. This is CPU text-only work, not a guarantee for GPU or multimodal models.')
-p('Sources: Qwen/Qwen3-Coder-Next-GGUF; Qwen/Qwen3.8-27B; unsloth/Qwen3.8-27B-GGUF on Hugging Face. Exact revisions, sizes and SHA-256 are pinned in examples/paging/*.download.json. Download status is not benchmark success.','SmallP')
+p('Sources on Hugging Face: Qwen/Qwen3-Coder-Next-GGUF; Qwen/Qwen3.8-27B; unsloth/Qwen3.8-27B-GGUF; prithivMLmods/Qwen3.8-27B-GGUF. Exact revisions, sizes and hashes: examples/paging/*.download.json. Download status is not success.','SmallP')
 
-page(8,'Portable idea, measured rollout','Windows first. Linux qualification and unattended campaign orchestration remain separate work.')
+page(8,'Portable idea, measured rollout','Windows measured. Linux qualification and automatic hosted review remain future work.')
 table(['Platform / component','What exists and what needs validation'],[
     ('Windows native','Measured CPU mmap paging. Automatic admission planner, working-set cap, watchdog and owned-worker cleanup.'),
     ('Linux','mmap/page cache offers the same basic idea. Planner detects Linux; hard cgroup enforcement is not wired in. Explicit monitored-only mode is not a memory-isolation result.'),
     ('WSL','Adds a VM and host/guest accounting. This PC only has Docker internal WSL. A dedicated test distro is a later phase; no global WSL settings changed.'),
     ('Durable work','SQLite records queued, drafting and needs-review/failed. A claimed job is never automatically replayed; acceptance checks candidate hash and source revision.')],[125,355])
-p('Linux cgroups account for charged cache and anonymous memory, unlike a Windows process working-set cap. Linux needs its own constrained tests and whole-host accounting. Model file paging is separate from swap. Native Linux may be preferable on a dedicated worker; WSL is not assumed faster on this desktop.')
+p('Linux cgroups account for charged cache and anonymous memory differently from a Windows working-set cap. Linux needs separate constrained tests. File-backed paging is distinct from swap; WSL is not assumed faster.')
 h('Several days means checkpoints, not an endless call')
 p('Each request has a finite timeout and stops for review. Save source revision, packet, candidate, tests, model/backend and next action. A deterministic dispatcher can wait without cloud polling. Hosted-session wakeup, leases, reboot recovery and automatic review handoff are not implemented. Never auto-merge drafts.')
-p('A separately launched, finite campaign can wait up to 48 hours for verified downloads, smoke-test each model and save bounded drafts once per model. It owns its API and stops at review. A STOP file requests cancellation; it never executes or accepts candidate code.')
-p('The current retest gives each new model one 90-minute motor task with continuous partial-text capture. Timed-out prefixes are retained but ungraded. After this finite cohort, it stops; no automatic timeout increase follows if none completes. Completed source still needs independent review and tests.')
-p('At low observable quota, commit a precise checkpoint before stopping dependent work. Downloads can finish independently; a Markdown file cannot renew usage or keep a hosted agent alive. Check docs/checkpoint.md for actual running jobs and remaining phases.')
+p('The explicit dispatcher preserves the reference round, runs a matched thread check, then launches three models on three patch tasks one at a time. The revised profile uses eight threads, 4096 context, up to 2048 output tokens, 120 minutes per request and a 24-hour campaign ceiling. All models get the same worked examples and unchanged tests. A STOP file cancels its stage; drafts are never auto-executed or accepted.')
+p('The matched Qwen3.8 Q4 motor check passed 49/49 at both thread counts: 33.0 minutes with four, 32.5 with eight. That is only 1.35% lower wall time in one historical pair. Cache, available RAM and actual residency budgets differed. Eight cores do not imply twice the inference speed. Native partial text is saved continuously; incomplete prefixes remain ungraded.')
+p('At low observable quota, commit a checkpoint. A saved file cannot renew usage or keep a hosted agent alive. Current jobs: docs/checkpoint.md.')
 note('Measure hosted cost per accepted patch, including planning, critique and retries. Cloud savings are a hypothesis, not a measured result here. Slow CPU work is acceptable when its accepted output is worthwhile; persistent wrong output is not progress.')
 p('Primary Linux reference: docs.kernel.org/admin-guide/cgroup-v2.html. Active notes: docs/guide.md, docs/agent-guide.md and docs/evaluation.md. Historical cluster material is research context only.','SmallP')
 
 
 def footer(canvas,doc):
     canvas.setStrokeColor(TEAL);canvas.line(54,42,558,42);canvas.setFillColor(NAVY);canvas.setFont('Helvetica',8)
-    canvas.drawString(54,29,'LOCAL WORKER BENCH | OS PAGING | 23 NOV 2026');canvas.drawRightString(558,29,str(doc.page))
+    canvas.drawString(54,29,'LOCAL WORKER BENCH | OS PAGING | 24 NOV 2026');canvas.drawRightString(558,29,str(doc.page))
 
 
 if __name__=='__main__':

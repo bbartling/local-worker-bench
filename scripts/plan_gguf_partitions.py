@@ -38,7 +38,7 @@ def value(handle,kind,retain=False):
     raise ValueError('Unsupported GGUF metadata type')
 
 
-def inspect(path):
+def inspect(path,extra_keys=()):
     with path.open('rb') as f:
         if f.read(4)!=b'GGUF' or take(f,'I') not in (2,3):raise ValueError('Expected GGUF v2/v3')
         count=take(f,'Q');metadata_count=take(f,'Q');alignment=32;metadata={}
@@ -46,7 +46,7 @@ def inspect(path):
         for _ in range(metadata_count):
             key=string(f);item=value(f,take(f,'I'))
             if key=='general.alignment':alignment=item
-            if key in ('general.architecture','general.name') or key.endswith('.block_count'):metadata[key]=item
+            if key in ('general.architecture','general.name') or key in extra_keys or key.endswith('.block_count'):metadata[key]=item
         tensors=[]
         for _ in range(count):
             name=string(f);ndim=take(f,'I')

@@ -1,5 +1,26 @@
 # Paging tool continuation checkpoint
 
+## Newest request: actual Qwen3.8 FP16 plus standard-Q4 control
+
+User requested both families compared at Q4 and FP16; downloading was explicitly
+authorized now. Cached Qwen3.8 BF16 is distinct and is not relabeled FP16.
+Two pinned prithivMLmods artifacts started concurrently with active inference:
+- qwen38-f16: PID 5032, managed session 55998, 54,657,733,952 bytes.
+- qwen38-standard-q4: PID 13208, session 75412, 16,810,714,432 bytes.
+Both revision 3ccdd49b1030d9ce891e42e817ece300ae278562. Manifests are committed
+under examples/paging/; raw cache/status under results/model-cache/<alias>/.
+Runtime launch metadata: results/paging-background/qwen38-precision-downloads.json.
+Do not start duplicate writers, delete partials or treat download start as verified.
+
+Prepare/extension scripts support these new aliases. The planned queued extension
+waits for the active overnight matrix to finish AND both verification manifests,
+inspects real tensor types/shapes/templates, then runs only the new two aliases
+on identical v2 tasks at eight threads/120 minutes/2048 output/4096 context/.40 RAM.
+Coder-Next Q4/F16 results in the preceding matrix supply the other half of the
+four-way comparison. Existing UD Q4 remains extra, BF16 separate. Download I/O
+contention must be disclosed in timing. Extension dispatcher is not yet launched;
+do so once after tests/commit with fresh output and record its PID/session here.
+
 ## Latest steering: overnight 120-minute / eight-thread follow-up
 
 User explicitly accepts 120-minute requests and wants supervised overnight patch

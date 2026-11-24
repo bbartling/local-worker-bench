@@ -13,6 +13,8 @@ sys.path.insert(0,str(ROOT))
 from local_worker_bench.project_bench import TASKS,packet,render,grade,digest_files
 from local_worker_bench.paging import verified_files
 
+MODEL_CACHES={'qwen38-q4':'qwen38-q4','coder-next-q4':'qwen3-coder-next-q4',
+    'coder-next-f16':'coder-next-f16','qwen38-f16':'qwen38-f16','qwen38-standard-q4':'qwen38-standard-q4'}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -20,12 +22,14 @@ def main():
     p.add_argument('--threads',type=int,choices=(4,8),default=4,help='8 requires explicit user authorization; default preserves desktop capacity')
     p.add_argument('--timeout',type=int,choices=(5400,7200),default=5400)
     p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=1024)
+    p.add_argument('--models',nargs='+',choices=MODEL_CACHES,default=['qwen38-q4','coder-next-q4','coder-next-f16'])
     args=p.parse_args()
     if not args.backend.is_file():raise ValueError('Backend missing')
     args.output.mkdir(parents=True,exist_ok=False)
     config={'backend_executable':str(args.backend.resolve()),'models':{}}
     evidence={'inference_started':False,'controls_are_handwritten':True,'models':{},'tasks':{}}
-    for alias,cache in [('qwen38-q4','qwen38-q4'),('coder-next-q4','qwen3-coder-next-q4'),('coder-next-f16','coder-next-f16')]:
+    for alias in args.models:
+        cache=MODEL_CACHES[alias]
         manifest=json.loads((ROOT/'results/model-cache'/cache/'verified-manifest.json').read_text())
         files=verified_files(manifest)
         config['models'][alias]={'files':files,'layer_stream':False,'validate_context':True,

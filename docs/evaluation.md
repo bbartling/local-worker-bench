@@ -132,6 +132,16 @@ model. Qwen3.8-27B is a newer general model to compare on coding tasks.
 | Coder-Next F16 | Qwen GGUF, four parts | 159,458,215,744 | Verified; motor 49/49 first pass, 41.8 min |
 | Qwen3.8-27B UD-Q4_K_M | Unsloth community GGUF | 16,564,259,744 | Verified; compact patch 25/25, motor 49/49 |
 | Qwen3.8-27B BF16 | Unsloth community GGUF, two parts | 54,657,735,616 | Verified; motor deadline at 90 min, ungraded |
+| Qwen3.8-27B F16 | prithivMLmods community GGUF | 54,657,733,952 | Downloading; FP16 tensor inspection and grading pending |
+| Qwen3.8-27B standard Q4_K_M | Same prithivMLmods revision as F16 | 16,810,714,432 | Downloading; separate from Unsloth UD Q4 |
+
+The requested Q4/FP16 comparison uses Coder-Next's Qwen-published pair and the
+new Qwen3.8 pair from one pinned community publisher revision. BF16 is not FP16.
+Existing UD Q4 results remain separate because its quantization recipe differs.
+New downloads began during the revised overnight matrix, so timing has competing
+network/disk activity. Pinning one conversion repository is a better control,
+not proof that only precision differs: inspect tensor names/shapes, actual tensor
+types, chat-template hashes and conversion provenance before interpreting results.
 
 ### Qwen3.8 Q4 follow-up
 

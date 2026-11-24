@@ -46,7 +46,7 @@ def publish(folder):
                 grade=json.loads(grade_path.read_text());files=candidate.get('answer',{}).get('files')
                 if not isinstance(files,dict) or digest_files(files)!=record.get('source_sha256') or grade.get('source_sha256')!=record['source_sha256']:
                     raise ValueError('Candidate/grade bundle mismatch')
-                disk={name:(trial/'candidate'/name).read_text() for name in TASKS[record['task']]['files']}
+                disk={name:(trial/'candidate'/name).read_bytes().decode('utf-8') for name in TASKS[record['task']]['files']}
                 if disk!=files:raise ValueError('Saved source differs from model response')
                 if item['packet']['base_revision']!=record['base_revision'] or digest_files(TASKS[record['task']]['files'])!=record['base_revision']:
                     raise ValueError('Fixture revision changed')

@@ -46,7 +46,7 @@ class PublicationTests(unittest.TestCase):
             files=TASKS['pagination']['reference'];record['source_sha256']=digest_files(files)
             (Path(folder)/'campaign.json').write_text(json.dumps({'trials':{trial.name:record}}))
             (trial/'candidate').mkdir()
-            for name,source in files.items():(trial/'candidate'/name).write_text(source)
+            for name,source in files.items():(trial/'candidate'/name).write_bytes(source.encode('utf-8'))
             (trial/'grade.json').write_text(json.dumps({'source_sha256':record['source_sha256'],'passed':25,'total':25,'code_executed':True}))
             result=module.publish(Path(folder))
             self.assertEqual(result['summary']['fixture']['graded_tasks'],1)

@@ -36,6 +36,12 @@ class ProjectBenchTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'changed since review'):
                 grade('pagination',folder,'0'*64)
 
+    def test_review_hash_preserves_crlf_candidate_bytes(self):
+        files={name:source.replace('\n','\r\n') for name,source in TASKS['telemetry']['reference'].items()}
+        result=self.run_files('telemetry',files)
+        self.assertEqual(result['failures'],[])
+        self.assertEqual(result['source_sha256'],digest_files(files))
+
     def test_prompt_contains_only_broken_sources_and_contract(self):
         for task,spec in TASKS.items():
             text=render(task)

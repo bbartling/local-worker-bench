@@ -370,7 +370,7 @@ def tests(task, modules):
 
 
 def grade(task, folder, reviewed_sha256):
-    files={name:(Path(folder)/name).read_text(encoding='utf-8') for name in TASKS[task]['files']}
+    files={name:(Path(folder)/name).read_bytes().decode('utf-8') for name in TASKS[task]['files']}
     if digest_files(files)!=reviewed_sha256:
         raise ValueError('Files changed since review')
     validate_files(task,files)

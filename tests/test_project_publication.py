@@ -40,4 +40,19 @@ class PublicationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'mismatch'):module.publish(Path(folder))
 
 
+    def test_green_grade_without_explicit_acceptance_stays_unaccepted(self):
+        with tempfile.TemporaryDirectory() as folder:
+            trial,record=self.setup_trial(folder)
+            files=TASKS['pagination']['reference'];record['source_sha256']=digest_files(files)
+            (Path(folder)/'campaign.json').write_text(json.dumps({'trials':{trial.name:record}}))
+            (trial/'candidate').mkdir()
+            for name,source in files.items():(trial/'candidate'/name).write_text(source)
+            (trial/'grade.json').write_text(json.dumps({'source_sha256':record['source_sha256'],'passed':25,'total':25,'code_executed':True}))
+            result=module.publish(Path(folder))
+            self.assertEqual(result['summary']['fixture']['graded_tasks'],1)
+            self.assertEqual(result['summary']['fixture']['accepted_tasks'],0)
+            (trial/'review.json').write_text(json.dumps({'source_sha256':record['source_sha256'],'decision':'accept'}))
+            self.assertEqual(module.publish(Path(folder))['summary']['fixture']['accepted_tasks'],1)
+
+
 if __name__=='__main__':unittest.main()

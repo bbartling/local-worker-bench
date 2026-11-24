@@ -72,6 +72,11 @@ CI runs only handwritten controls/baselines, never generated candidates or infer
 Report all-checks-passed per task, individual cases, time, prompt/output tokens,
 resource use and hosted review separately. A task passing 25 correlated cases
 still counts as one task. No supervisor-written code counts as model success.
+Before publication, write review.json alongside grade.json with the reviewed
+source_sha256, decision (accept or needs_supervisor) and reason. A green test
+grade without matching explicit supervisor acceptance is never an accepted task.
+Contract issues found by review outside the frozen tests are recorded separately;
+do not alter the frozen suite mid-matrix or hide those issues behind a green score.
 At most one targeted local repair may follow an inspected failure in a separate
 attempt with original source/failures preserved; this first-pass cohort performs
 none. A larger-task versus decomposed-task supervisor study remains a separate

@@ -51,7 +51,14 @@ def publish(folder):
                 if item['packet']['base_revision']!=record['base_revision'] or digest_files(TASKS[record['task']]['files'])!=record['base_revision']:
                     raise ValueError('Fixture revision changed')
                 item['grade']=grade
-                item['accepted']=grade.get('code_executed') is True and grade['passed']==grade['total'] and grade['total']>0
+                review_path=trial/'review.json'
+                if review_path.exists():
+                    review=json.loads(review_path.read_text())
+                    if review.get('source_sha256')!=record['source_sha256']:
+                        raise ValueError('Supervisor review hash mismatch')
+                    item['review']=review
+                    item['accepted']=(review.get('decision')=='accept' and grade.get('code_executed') is True
+                        and grade['passed']==grade['total'] and grade['total']>0)
         result['trials'][key]=item
         summary=result['summary'].setdefault(record['model'],{'accepted_tasks':0,'graded_tasks':0,'attempted_tasks':0,'coding_seconds':0})
         summary['attempted_tasks']+=1

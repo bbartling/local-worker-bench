@@ -43,7 +43,7 @@ def main():
     thread_info=default_threads()
     if args.threads is None:
         args.threads=thread_info['threads']
-    if not 5<=args.timeout<=7200 or not .1<=args.hours<=24:raise ValueError('Finite deadlines required')
+    if not 5<=args.timeout<=7200 or not .1<=args.hours<=72:raise ValueError('Finite deadlines required')
     if isinstance(args.memory_fraction,bool) or not .1<=args.memory_fraction<=.66:raise ValueError('memory fraction .10 through .66 required')
     if not 1<=args.threads<=128:raise ValueError('threads must be 1..128')
     if len(set(args.models))!=len(args.models) or len(set(args.tasks))!=len(args.tasks):raise ValueError('No repeated trials in one cohort')

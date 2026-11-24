@@ -1,14 +1,14 @@
 # Local Worker Bench: coding-agent context
 
-## Active inference pause - 24 November 2026
+## Inference resumed - 24 November 2026
 
-The user paused local model testing pending another model's critique of the test
-design. Downloads and offline code/handwritten-control checks may continue.
-Do not start inference, smoke calls, benchmarks or queued model work until the
-user explicitly resumes. Current inference campaigns/dispatchers have stopped;
-preserve STOP markers and claimed/cancelled evidence. Read docs/review-request.md
-and docs/checkpoint.md before any continuation. This pause does not authorize
-stopping unrelated user applications or changing global Ollama settings.
+User explicitly resumed Suite-3 six-format project-patch matrix. Durable
+dispatcher: `scripts/handoff_suite3_six_matrix.py` →
+`results/suite3-six-matrix-20261124/`. Wave A (verified) then hour-sleep until
+Wave B downloads verify. Write `STOP` in that folder to cancel. Do not start a
+second competing matrix or kill unrelated apps / change global Ollama settings.
+Preserve old STOP markers and evidence elsewhere. Downloads may contend with
+timing — disclose in publication.
 
 ## Project context
 

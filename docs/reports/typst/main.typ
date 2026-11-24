@@ -55,6 +55,31 @@ Why not use long, slow local cycles between *biweekly Open-FDD releases*? A patc
   caption: [Enterprise model orchestrates; local llama.cpp worker pages GGUF weights from SSD into a bounded RAM working set.],
 )
 
+== Why log tokens per Open-FDD patch cycle?
+
+Yes—this is the right paper evidence for “does local routing help?”
+Open-FDD already ships on a roughly *biweekly* cadence; each release is a long supervised patch cycle.
+A Claude-only floor for *5.0.21* (17–20 Nov 2026, incomplete early merges) already shows the shape of the cost:
+
+#figure(
+  table(
+    columns: (1.6fr, 1.2fr, 1.6fr),
+    align: (left, right, left),
+    [*Meter (Claude only)*], [*Amount*], [*Read*],
+    [Model replies], [2 803], [Steps in the window],
+    [Cache reads], [~1.39 B], [~99.5% of raw tokens—context re-read],
+    [Cache writes], [~4.6 M], [Session growth],
+    [Output], [~1.9 M], [Code, comments, PR text],
+    [Uncached input], [~6 k], [Tiny vs cache],
+    [Weighted cost-equivalent], [~$158$ M], [Dominated by cache reads (~139 M weighted)],
+  ),
+  caption: [Open-FDD 5.0.21 Claude floor (`token_ledger.py peek`). Not Codex/Grok. Pre–17 Nov work missing—treat as a lower bound.],
+)
+
+The lesson for 5.0.22+: keep context small (fresh sessions, subagents, less CI re-check in one thread).
+For *5.0.23*, when drafts can be *routed to this local worker*, log both sides of the same cycle: enterprise ledger (plan/critique) *and* local `prompt_eval_count` / `eval_count` from API receipts (already recorded per draft).
+Paper claim to test—not assert yet: overnight local paging trades wall time for fewer enterprise cache re-reads on mechanical edits, while Claude still owns acceptance.
+
 = Paging: models larger than RAM
 
 Coding checkpoints here are ~17–160 GB; this PC has 32 GiB RAM.

@@ -1,163 +1,122 @@
-// Local Worker Bench — research note (human-readable, ≤6 pages)
-// Compile: typst compile docs/reports/typst/main.typ docs/reports/os-paging-research.pdf
-// STATUS: methods / apparatus paper. The matched Q4·FP16·BF16 project-patch matrix has NOT been run yet.
+// ≤6 page methods + results-ready conclusion
+// typst compile docs/reports/typst/main.typ docs/reports/os-paging-research.pdf
 
 #set document(
-  title: "Local Worker Bench: OS-Paged CPU Drafting for Supervised Patch Cycles",
+  title: "Optimizing Local Coding on Ordinary CPUs with OS-Paged Models",
   author: "local-worker-bench",
   date: datetime(year: 2026, month: 11, day: 24),
 )
-#set page(
-  paper: "us-letter",
-  margin: (top: 0.75in, bottom: 0.7in, left: 0.75in, right: 0.75in),
-  numbering: "1",
-)
+#set page(paper: "us-letter", margin: (x: 0.72in, y: 0.68in), numbering: "1")
 #set text(font: "New Computer Modern", size: 10pt)
-#set par(justify: true, leading: 0.65em)
+#set par(justify: true, leading: 0.64em)
 #set heading(numbering: "1.")
-#show heading.where(level: 1): it => {
-  set text(size: 11.5pt)
-  v(0.55em)
-  it
-  v(0.25em)
-}
-#show heading.where(level: 2): it => {
-  set text(size: 10.5pt)
-  v(0.4em)
-  it
-  v(0.15em)
-}
-#show figure.caption: set text(size: 8.5pt)
+#show heading.where(level: 1): it => { set text(size: 11.5pt); v(0.48em); it; v(0.2em) }
+#show heading.where(level: 2): it => { set text(size: 10.5pt); v(0.32em); it; v(0.1em) }
+#show figure.caption: set text(size: 8.2pt)
 #set table(stroke: 0.4pt + luma(160), inset: 5pt)
 
 #align(center)[
-  #text(size: 14pt, weight: "bold")[
-    Local Worker Bench: OS-Paged CPU Drafting for Supervised Patch Cycles
+  #text(size: 13.2pt, weight: "bold")[
+    Optimizing Local Coding on Ordinary CPUs:\
+    OS Paging for Long Patch Cycles
   ]
-  #v(0.35em)
-  #text(size: 9.5pt)[
-    Methods note · What the tool is · What we have _not_ finished measuring yet
-  ]
-  #v(0.2em)
-  #text(size: 8.5pt, fill: luma(70))[24 November 2026 · Inference paused · Downloads may continue]
-]
-
-#v(0.35em)
-#block(width: 100%, inset: 8pt, stroke: 0.8pt + luma(40), fill: luma(245))[
-  #text(weight: "bold")[Read this first — study status.]
-  This paper explains the *idea* and the *machinery*. It is *not* a finished bake-off of Q4 vs FP16 vs BF16 on hard patches, and it is *not* a report that Open-FDD was fixed by a local model.
   #v(0.25em)
-  *Not done yet:* the matched six-format project-patch matrix under Suite 3 (120 min, auto RAM/threads); any real Open-FDD repository patch; crowning a “best” local format.
-  #v(0.15em)
-  *Done offline:* harness, Suite 3 graders, resource defaults, downloads in progress, early *pilot* runs on easier packets (kept below as background only).
+  #text(size: 9.2pt)[Enterprise supervision · Open-FDD as a typical biweekly engineering vehicle]
+  #v(0.1em)
+  #text(size: 8pt, fill: luma(70))[24 November 2026 · Suite‑3 matrix in progress]
 ]
 
-#v(0.35em)
+#v(0.3em)
+#block(width: 100%, inset: 7pt, stroke: 0.7pt + luma(40), fill: luma(247))[
+  #text(weight: "bold", size: 8.8pt)[How to read this.]
+  #text(size: 8.8pt)[
+    High-level methods now; *winner and trade-offs in the conclusion once Suite‑3 finishes*.
+    Live cells below are wall-clock only until graded. No format is crowned yet.
+  ]
+]
+
+#v(0.25em)
 #text(weight: "bold")[Abstract.]
-Local Worker Bench is a hobby apparatus: can an ordinary CPU desktop draft code overnight while an enterprise (hosted) model plans, critiques, and accepts? Model files sit on disk as GGUF packages; a pinned llama.cpp worker maps them; Windows pages pieces into RAM. We *plan* to compare three storage styles—compressed *Q4*, fuller *FP16*, and sibling *BF16*—once downloads finish and the user resumes inference. This note teaches those ideas in plain language. Early pilots exist; the decisive comparison does *not* yet.
+Local coding models are good enough that the real question is how to run a *large* one on a normal desktop *without a GPU* for slow, real patch cycles—the kind that fit Open-FDD’s biweekly release rhythm.
+An enterprise (hosted) model plans and critiques; a local model drafts overnight on CPU.
+The bottleneck is model size versus RAM.
+We use OS *memory paging* (4 KiB pages) over memory-mapped GGUF files in llama.cpp so the whole checkpoint need not sit in RAM.
+We compare Q4 (compressed), FP16, and BF16 artifacts for Qwen3.8 and Coder-Next, and we will declare a winner only from *accepted patches* versus wall time and file size.
 
-= Motivation
+= Local coding on ordinary hardware
 
-Open-FDD is a real Python engineering project. Patch cycles there are already slow. The bet is that a *local* coding model can draft, while Claude/Codex/Grok-class models stay supervisor: they own the contract, read every generated file, run independent checks, and never treat a local draft as authority. Slow generation (hours) is acceptable *if* accepted quality holds. That quality claim for repository-scale work is *unproven*; this bench is how we intend to measure it later.
+Hosted models are strong planners; local models are strong overnight drafters.
+Pattern: enterprise orchestrates → local CPU drafts → review every file → independent tests → accept or one repair → never auto-merge.
+Open Fault Detection and Diagnostics (*Open-FDD*) is ordinary Python engineering (analytics, paging helpers, units, tests)—not a full-stack web app—so it is a fair stand-in.
+Why not use long, slow local cycles between *biweekly Open-FDD releases*? A patch that takes a night still fits a two-week train if the enterprise model only wakes to critique.
 
-= What the software is (and is not)
+#figure(
+  image("figures/fig-supervised-paging.jpg", width: 88%),
+  caption: [Enterprise model orchestrates; local llama.cpp worker pages GGUF weights from SSD into a bounded RAM working set.],
+)
 
-== Custom code in this repository
+= Paging: models larger than RAM
 
-- `paging.py` — looks at free RAM and CPUs; budgets about two-thirds of *currently free* RAM (with a safety reserve). Creates *zero* fixed model slices.
-- `offload_api.py` — small web API (Ollama-_shaped_, not Ollama). Starts/stops one owned worker per request; records receipts; refuses tools/images/streaming.
-- Pinned llama.cpp build — maps GGUF files so Windows can page weights from SSD.
-- `project_bench.py` — synthetic Open-FDD-_inspired_ tasks (pager, telemetry, SI export) with contracts and offline graders (Suite 3 after a review found Suite 1 too easy to fake).
-- Campaign scripts — serial drafts only; no auto-merge; human/AI review before any grade counts as accept.
+Coding checkpoints here are ~17–160 GB; this PC has 32 GiB RAM.
+*Memory paging* moves fixed-size pages between disk and RAM (Wikipedia: Memory paging / Virtual memory).
+On Atlas (1962) this was a “one-level store” (Kilburn et al.).
+Today: map GGUF on SSD; Windows pages 4 KiB units; we budget ~⅔ of *free* RAM and ~⅔ of CPU threads (5 here), with a *120 min* request deadline.
+Paging ≠ API pagination.
 
-We are *not* writing a new neural engine, *not* training models, and *not* modifying installed Ollama.
-
-== Ollama, GGUF, llama.cpp, PyTorch, tensors
+#figure(
+  image("figures/chart-model-vs-ram.png", width: 93%),
+  caption: [Model file size vs 32 GiB RAM and ~10 GiB working-set budget. Larger files must page.],
+)
 
 #figure(
   table(
-    columns: (1.15fr, 2.85fr),
-    align: (left, left),
-    [*Term*], [*Plain meaning*],
-    [GGUF], [The “shipping box” for a model on disk.],
-    [llama.cpp], [The engine that opens that box on a normal CPU.],
-    [Ollama], [A popular local-model app. We leave it alone; our API only *looks* a bit like it.],
-    [PyTorch], [A research toolkit. Not used for the big coding path here.],
-    [Tensor], [A grid of numbers. “Weights” are tensors. Paging moves chunks between disk and RAM.],
+    columns: (1.35fr, 0.85fr, 1.0fr, 1.3fr),
+    [*Artifact*], [*Size*], [*÷ 4 KiB*], [*Note*],
+    [OS page], [4 KiB], [1], [Movement grain],
+    [Working set (auto)], [~$10$ GiB], [~$2.6$M], [~⅔ of free RAM],
+    [Qwen3.8 Q4], [~16.8 GB], [~$4.1$M], [Smallest Qwen cell],
+    [Qwen3.8 FP16/BF16], [~54.7 GB], [~$13$M], [16-bit pair],
+    [Coder-Next Q4], [~48.4 GB], [~$12$M], [Compressed 80B-class],
+    [Coder-Next FP16/BF16], [~159 GB], [~$39$M], [Heaviest paging],
   ),
-  caption: [Vocabulary for non-specialists.],
+  caption: [Size vs OS page. FP16 and BF16 are different 16-bit layouts; Q4 is quantized/compressed.],
 )
 
-== Q4, FP16, and BF16 — plain language
+*Glossary (short):* GGUF = on-disk model box; tensor = number grid; llama.cpp = engine we run; Ollama = separate app we do not modify; PyTorch = only in tiny historical demos, not this coding path; Q4 ≈ compressed weights; FP16/BF16 ≈ fuller 16-bit storage (“bfloat” is BF16, not a typo for FP16).
 
-A model is mostly a huge pile of numbers. Store them densely or loosely—like a tiny JPEG vs a huge raw photo. Labels here are *Q4*, *FP16*, and *BF16* (not “FP15” / “BP16”).
+= What we measure
+
+Six cells: Qwen3.8 and Coder-Next × Q4, FP16, BF16. Suite‑3 synthetic Open-FDD-inspired tasks. Primary score = *accepted tasks* after review (not raw case fractions). Secondary = wall time and size (efficiency).
 
 #figure(
-  table(
-    columns: (0.7fr, 1.1fr, 2.2fr),
-    align: (left, left, left),
-    [*Label*], [*Everyday analogy*], [*What we will measure later*],
-    [Q4], [Compressed cookbook], [Smaller file (tens of GB). May be “good enough” for drafts—or not. Unknown until Suite 3 matrix runs.],
-    [FP16], [High-quality 16-bit photo], [Much larger (~55 or ~159 GB). More precise storage; heavy paging on a 32 GB PC.],
-    [BF16], [Different 16-bit film stock], [Also ~16-bit, different layout than FP16. Own artifact; not automatically better.],
-  ),
-  caption: [Formats we *intend* to compare. No winner has been crowned.],
+  image("figures/chart-pilot-results.png", width: 92%),
+  caption: [Early pilots only: easy motors can pass; one BF16 motor timed out; first hard pagination round accepted 0/3.],
 )
-
-*Open question (not answered yet):* on this office PC, does Q4 still get *accepted* after review, or does a 16-bit file earn enough quality to justify hours of paging? We must not claim “BF16 beats Q4” from early, unmatched pilots.
-
-= OS memory paging (the core idea)
-
-On a 32 GiB PC, a ~159 GB file cannot sit fully in RAM. The engine maps the file; Windows brings pages in when touched and can drop cold ones. Guards stop the worker if the desktop is endangered. We do *not* change the global pagefile or close your apps.
-
-One early paired trial found OS paging much faster than an older “kick layers out by hand” approach on a tiny patch. That is why the active tool uses OS paging. It does *not* mean the hard Open-FDD problem is solved.
-
-== How much of the computer? (plain language)
-
-Think of a shared kitchen while you still browse and work.
-
-*RAM.* Allow about *two-thirds of the RAM that is free right now*, after a reserve for Windows. Example: ~15 GiB free → ~10 GiB working set—not “66% of the model.” The rest pages from disk.
-
-*Threads.* About *two-thirds of CPU lanes* (five on this eight-lane PC). More threads barely helped in one early motor trial (~1%); disk paging dominates.
-
-*Time.* Intended project-patch deadline: *120 minutes* per request. Timeout means “no complete patch,” not a fake failing score. Overnight queues are fine once inference resumes.
-
-= Testing design (apparatus, not finished scoreboard)
-
-Three synthetic tasks (not 74 projects). Models see broken code + contract; tests are hidden from the prompt but public in-repo. Accept only if: complete files, supervisor read, hashes match, all Suite 3 checks green, explicit accept. Rank by *accepted tasks*, not raw fractions.
-
-Suite 1 was too easy to fake (wrong patches could look green). Offline Suite 3 + mutant checks address that *before* the next model matrix. No Suite 3 model grades exist yet—inference is paused.
-
-= Early pilots only (not the format crown)
-
-These numbers are *background*. They used older settings (often 90 min, 40% RAM, Suite 1). They are *not* the planned Q4/FP16/BF16 Suite 3 comparison.
 
 #figure(
-  table(
-    columns: (1.55fr, 2.45fr),
-    align: (left, left),
-    [*Early pilot*], [*What it showed (limited)*],
-    [OS paging vs hand eviction (tiny patch)], [Same answer; paging much faster in one pair.],
-    [Easy “motor” function], [Some models scored 49/49; that packet is near ceiling—not a format winner.],
-    [Harder pagination project task], [*0 accepted* among three attempts (timeout / ask for examples / incomplete checks).],
-    [4 vs 8 CPU threads], [Almost no speed gain when paging-bound.],
-  ),
-  caption: [Pilots only. Full matrix and Open-FDD patches = future work.],
+  image("figures/chart-efficiency-size-time.png", width: 94%),
+  caption: [Efficiency sketch: disk size vs wall minutes. Live Suite‑3 pagination drafts are ungraded; dashed line = 120 min deadline.],
 )
 
-= Intended Open-FDD cycle (future)
+*Live Wave A (ungraded drafts):* Coder-Next Q4 pagination ~12.6 min; Coder-Next FP16 ~52 min; Qwen3.8 standard Q4 in flight. Wave B waits on remaining FP16/BF16 downloads (hour polls).
 
-Enterprise model plans → local GGUF drafts overnight → review every file → independent tests in a disposable copy → accept / one repair / supervisor takeover. Never auto-merge. *No production Open-FDD patch has been attempted.*
+= Conclusion — winner rules (fill when Suite‑3 completes)
 
-= What happens next
+If the matrix finishes in time, the conclusion must answer four questions in plain language:
 
-1. Finish downloads (standard Q4, FP16, Coder-Next BF16 still in progress at writing).
-2. User explicitly removes the inference pause.
-3. Run *Wave A* (already verified models) first; hour-sleep until Wave B downloads verify.
-4. Same Suite 3, 120 min, auto RAM/threads for every cell that shares a table.
-5. Refresh this paper with *those* results—or with honest failures. Until then, treat this PDF as a methods primer, not a results paper.
+1. *Did it work?* At least one accepted Suite‑3 project patch under enterprise review, or an honest “not yet.”
+2. *Who won quality?* Most *accepted tasks* (first pass, then after one repair). Ties: fewer critical refusals/timeouts.
+3. *Q4 vs FP16 vs BF16?* Same-family pairs only. Q4 = quantized/smaller; FP16/BF16 = fuller 16-bit files (BF16 ≠ FP16). Report whether 16-bit bought any accepted-task gain worth the extra hours of paging.
+4. *Best trade-off?* The efficient winner minimizes wall time and disk size among models that still *accept*. A fast refusal is not a win. A huge FP16 that barely beats Q4 on quality but costs 4× time is not “best value.”
 
-= Conclusion
+*Provisional (not a crown):* smaller Q4 files draft faster in early and live wall clocks; 16-bit files are slower under paging; easy motors saturated; hard patches remain the real test for Open-FDD-style biweekly cycles.
+*When graded:* replace this paragraph with the named winner, a one-row trade-off table (accepts / minutes / GB), and an updated efficiency chart.
 
-Local Worker Bench is scaffolding for supervised local drafting under OS paging. The story for non-specialists is simple: big model files on disk, Windows shares memory, Q4 is the compressed cookbook and FP16/BF16 are fuller copies, an enterprise model stays in charge, and slow overnight drafts are allowed. *We have not yet run the comparison that would say which cookbook wins for Open-FDD-like patches.* Early pilots are encouraging on easy tasks and unsuccessful on a harder pager—nothing more.
-)
+Until then: enterprise orchestration + OS-paged local drafts remain a credible way to spend nights between Open-FDD releases—if Suite‑3 accepts prove it.
+
+#v(0.4em)
+#text(size: 8.2pt, weight: "bold")[References]
+#set text(size: 7.7pt)
+Wikipedia: “Memory paging”; “Virtual memory”; “Atlas (computer)” (accessed 2026-11-24). \
+T. Kilburn, R. B. Payne, D. J. Howarth, “The Atlas Supervisor” (1962). \
+Project: `docs/guide.md`, `HANDOFF.md`, `local_worker_bench/paging.py`.

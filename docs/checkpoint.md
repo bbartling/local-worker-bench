@@ -1,13 +1,12 @@
 # Paging tool continuation checkpoint
 
-## ACTIVE PAUSE - independent test critique requested
+## ACTIVE PAUSE - suite critique done; inference still paused
 
-The user may have Cursor finish due to low weekly hosted usage. Root HANDOFF.md
-is the full operational/research handoff; docs/review-request.md is the critique
-brief. Latest requested automatic CPU/RAM defaults are documented as TODO, not
-implemented: RAM .66 already exists in paging-plan, project runners still .40;
-CPU near .66 of affinity-visible logical CPUs with explicit overrides is pending.
-Do not claim that feature complete or resume inference to implement it.
+Root HANDOFF.md is authoritative. Suite 3 + auto resource defaults (.66 RAM,
+~66% CPU threads, 120 min, 2048 output tokens) are implemented offline. Typst
+methods note reframed: no unfinished Q4/FP16/BF16 matrix presented as results.
+Do not resume inference until the user explicitly unpauses. Prepare and run
+must use matching `--max-tokens` (both default 2048 now).
 
 User requested updating test code, then pausing model testing for another model's
 critique. Inference is stopped; downloads remain authorized. INFERENCE_PAUSED

@@ -51,7 +51,7 @@ def main():
     p.add_argument('--backend',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--threads',type=int,default=None,help='Override auto thread count (~66%% of affinity-visible CPUs)')
     p.add_argument('--timeout',type=int,choices=(5400,7200),default=7200,help='End-to-end request deadline; default 120 minutes')
-    p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=1024)
+    p.add_argument('--max-tokens',type=int,choices=(1024,2048),default=2048,help='Must match run_project_bench default')
     p.add_argument('--models',nargs='+',choices=MODEL_CACHES,default=['qwen38-q4','coder-next-q4','coder-next-f16'])
     args=p.parse_args()
     thread_choice=default_threads()

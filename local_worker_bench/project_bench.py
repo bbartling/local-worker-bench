@@ -16,7 +16,7 @@ import unittest
 
 SUITE_VERSION = 3
 SUITE_V1_TOTALS = {'pagination': 25, 'telemetry': 26, 'export': 23}
-SUITE_V3_TOTALS = {'pagination': 31, 'telemetry': 28, 'export': 27}
+SUITE_V3_TOTALS = {'pagination': 33, 'telemetry': 28, 'export': 28}
 
 
 TASKS = {
@@ -384,7 +384,12 @@ def _build_tests(task, modules, version):
                 add('invalid_cap_'+repr(cap),lambda t,c=cap:t.pager([],max_pages=c,error=True))
         if version >= 3:
             add('bool_total_one_row', lambda t: t.pager([{'points':[_row('a')], 'totalCount': True}], error=True, min_fetches=1))
+            add('float_total_one_row', lambda t: t.pager([{'points':[_row('a')], 'totalCount': 2.0}], error=True, min_fetches=1, max_fetches=1))
             add('terminal_empty_id', lambda t: t.pager([{'points':[{'id': ''}]}], error=True, min_fetches=1))
+            class CapSubclass(int):
+                pass
+            add('invalid_cap_int_subclass', lambda t, c=CapSubclass(2): t.pager(
+                [{'points':[_row('a')]}], max_pages=c, error=True, max_fetches=0))
             add('exact_max_pages_success', lambda t: t.pager(
                 [{'points':[_row('a')], 'totalCount': 2, 'nextPageToken': 'tok'}, {'points':[_row('b')], 'totalCount': 2}],
                 list(map(_row, 'ab')), max_pages=2, inspect=lambda seen: t.assertEqual(len(seen), 2)))
@@ -419,7 +424,10 @@ def _build_tests(task, modules, version):
         }.items():
             add(label,lambda t,r=rows:t.duration(r,error=True))
     else:
-        for unit,value,expected in [('F',32,0.0),('F',212,100.0),('C',-40,-40.0),('Pa',12,12.0),('kPa',1.25,1250.0),('C',None,None)]:
+        conversions = [('F',32,0.0),('F',212,100.0),('C',-40,-40.0),('Pa',12,12.0),('kPa',1.25,1250.0),('C',None,None)]
+        if version >= 3:
+            conversions = conversions + [('F', 33, 5 / 9)]  # kills whole-degree Fahrenheit rounding
+        for unit,value,expected in conversions:
             def conversion(t,u=unit,v=value,e=expected):
                 actual=t.modules['units'].to_si(v,u)
                 if e is None:t.assertIsNone(actual)

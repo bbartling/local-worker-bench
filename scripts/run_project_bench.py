@@ -1,7 +1,8 @@
 """Explicit finite synthetic patch drafting matrix. Never executes model code.
 
-Own loopback API, serial four-thread requests, fixed output folder, no replay,
-no automatic repairs or acceptance. STOP cancels only this campaign's worker.
+Own loopback API, serial requests (default ~66% of visible CPUs, 120 min, .66 RAM),
+fixed output folder, no replay, no automatic repairs or acceptance.
+STOP cancels only this campaign's worker.
 """
 import argparse
 import hashlib

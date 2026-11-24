@@ -53,6 +53,20 @@ def _pager_mutants():
                 "return float(abs(value) * 1000 if unit == 'kPa' else value)"),
             'report.py': report,
         }),
+        ('round_fahrenheit', 'export', {
+            'units.py': units.replace(
+                'return float((value - 32) * 5 / 9)',
+                'return float(round((value - 32) * 5 / 9))'),
+            'report.py': report,
+        }),
+        ('coerce_float_total', 'pagination', {'pager.py': pager.replace(
+            'if type(value) is not int or value < 0 or (total is not None and value != total):',
+            'if type(value) is float and value.is_integer():\n                value = int(value)\n            if type(value) is not int or value < 0 or (total is not None and value != total):')
+        }),
+        ('isinstance_max_pages', 'pagination', {'pager.py': pager.replace(
+            'if type(max_pages) is not int or max_pages < 1:',
+            'if isinstance(max_pages, bool) or not isinstance(max_pages, int) or max_pages < 1:')
+        }),
     ]
 
 

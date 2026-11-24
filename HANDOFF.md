@@ -44,9 +44,12 @@ download writer. Check live state with
 
 **New project-patch defaults (do not relabel old runs):** **120-minute**
 end-to-end timeout, **~66% of currently available RAM**, **~66% of visible
-logical CPUs** as threads (5 on this 8-CPU PC). Overrides allowed. Historical
+logical CPUs** as threads (5 on this 8-CPU PC), **2048** output tokens on both
+`prepare_project_bench` and `run_project_bench`. Overrides allowed. Historical
 matrices used 90 min / .40 RAM / 4 or 8 threads—keep those labeled separately.
-Plain-language explanation: `docs/reports/os-paging-research.pdf`.
+Plain-language methods note (not a finished bake-off):
+`docs/reports/os-paging-research.pdf`. After unpause: fresh output dir, Wave A
+verified models first; accept only all-green Suite 3 + source review.
 
 | Wave | Alias | Role | Gate |
 | --- | --- | --- | --- |

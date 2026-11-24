@@ -11,6 +11,18 @@ four threads, 4096 context, 1024 output, .40 RAM, 90 minutes per request. No
 automatic source execution or repairs. Inspect and hash-grade complete files
 before accepting any result. Runtime details will be recorded after launch.
 
+Live run: results/project-patches-20261124-managed, controller PID 25976,
+managed exec session 64725, loopback port 11440. First task pagination--qwen38-q4
+claimed. Config: results/project-patch-setup-20261124/api-config.json. Inspect
+campaign.json, candidate.json, API partial/receipt files and grade.json; do not
+relaunch or delete active leases. Write STOP in this run folder to cancel.
+The first hidden launch results/project-patches-20261124 ended with controller
+PID 23100 and client 21916 absent, no Python error log, native worker 25828
+orphaned. Supervisor confirmed identity, stopped that worker and removed only
+those dead-owner locks, preserved an infrastructure-interruption disposition,
+then explicitly launched the unchanged replacement cohort in the managed session.
+No complete candidate from that interrupted attempt was graded or counted.
+
 ## Completed after the three-hour wait
 
 The handoff and finite cohort are finished. No further inference is scheduled.

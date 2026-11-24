@@ -19,6 +19,7 @@ sys.path.insert(0,str(ROOT))
 from local_worker_bench.offload_api import Manager,handler_for,read_config
 from local_worker_bench.paging import verified_files
 from local_worker_bench.runner import api,worker_lock
+from local_worker_bench.pause import require_benchmark_enabled
 
 MODELS=('qwen38-q4','qwen38-bf16','coder-next-f16')
 
@@ -37,6 +38,7 @@ def main():
     p.add_argument('--load-timeout',type=int,default=180)
     p.add_argument('--tasks',nargs='+',choices=('patch','motor','elapsed'),default=['patch','motor','elapsed'])
     args=p.parse_args()
+    require_benchmark_enabled(ROOT)
     if not .1<=args.memory_fraction<=.66:raise ValueError('Use memory fraction .10 through .66')
     if not 5<=args.request_timeout<=21600:raise ValueError('Request timeout must be 5 through 21600 seconds')
     if not 5<=args.load_timeout<=600:raise ValueError('Load timeout must be 5 through 600 seconds')

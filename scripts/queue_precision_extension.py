@@ -16,6 +16,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.paging import verified_files
 from scripts.plan_gguf_partitions import inspect
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 def inspect_pair(cache):
@@ -62,6 +63,7 @@ def main():
     p.add_argument('--legacy',type=Path,required=True);p.add_argument('--backend',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--wait-hours',type=float,default=24)
     args=p.parse_args()
+    require_benchmark_enabled(ROOT)
     if not .1<=args.wait_hours<=24:raise ValueError('Finite wait .1 through 24 hours')
     args.output.mkdir(parents=True,exist_ok=False);record=args.output/'handoff.json'
     state={'state':'waiting_for_parent_and_verified_models','started_epoch':time.time(),
@@ -69,7 +71,7 @@ def main():
         'threads':8,'request_timeout':7200,'output_tokens':2048,'context':4096,'prompt_version':2,
         'generated_code_executed':False,'automatic_acceptance':False}
     save(record,state)
-    def cancelled():return any(p.exists() for p in (args.output/'STOP',args.legacy/'STOP',args.legacy.parent/'STOP'))
+    def cancelled():return any(p.exists() for p in (ROOT/'INFERENCE_PAUSED',args.output/'STOP',args.legacy/'STOP',args.legacy.parent/'STOP'))
     while time.time()<state['wait_deadline_epoch']:
         if cancelled():state['state']='cancelled';save(record,state);return 0
         if ready(args.legacy,ROOT/'results/model-cache'):

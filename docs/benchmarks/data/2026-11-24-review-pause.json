@@ -1,0 +1,168 @@
+{
+  "observed_epoch": 1795542670.292409,
+  "inference_paused": true,
+  "downloads_allowed": true,
+  "resume_requires_explicit_user_instruction": true,
+  "campaign": {
+    "source_revision": "ca429e5726fff3f1dd389b8629a412407df61b7e",
+    "started_epoch": 1795540313.4857187,
+    "deadline_epoch": 1795626713.485719,
+    "request_timeout": 7200,
+    "context": 4096,
+    "output_tokens": 2048,
+    "threads": 8,
+    "prompt_version": 2,
+    "memory_fraction": 0.4,
+    "trials": {
+      "pagination--qwen38-q4": {
+        "state": "needs_supervisor",
+        "started_epoch": 1795540313.5032926,
+        "task": "pagination",
+        "model": "qwen38-q4",
+        "base_revision": "38de7f6ca52a3409b6cab301663fea90cc6042de2d0dc65292d4c453e4bf5f93",
+        "prompt_sha256": "7cfb936c2f4d731bd1744489975981c9352a1fe5016e09f8092ba5ebda4607ad",
+        "error": "Campaign stopped/deadline",
+        "finished_epoch": 1795541935.9774842
+      }
+    },
+    "generated_code_executed": false,
+    "automatic_repairs": false,
+    "config_sha256": "27bdda568f6d19a8eebae9ad8307522162e25718eb4a53f7f095a0c629491310",
+    "backend_sha256": "3244a4871d48be98e74870ce06ab74a6e61e9f690509cc75663cacf1abffba69",
+    "finished_epoch": 1795541936.2529418
+  },
+  "disposition": "First revised request was user-cancelled, not timed out; no coding grade.",
+  "receipts": [
+    {
+      "receipt": {
+        "id": "bd0b4043cc36414398d714afb9982c49",
+        "model": "qwen38-q4",
+        "started_utc": "2026-11-24T17:11:53.822481+00:00",
+        "profile": {
+          "layer_stream": false,
+          "validate_context": true,
+          "capture_partial": true,
+          "memory_fraction": 0.4,
+          "threads": 8,
+          "context": 4096,
+          "max_tokens": 2048,
+          "working_set_gib": 6.878273010253906,
+          "reserve_gib": 3.199999999254942,
+          "private_limit_gib": 6,
+          "request_timeout": 7200,
+          "load_timeout": 600,
+          "admission_plan": {
+            "host": {
+              "available_bytes": 18463723520,
+              "available_commit_bytes": 14876049408,
+              "total_bytes": 34359738368,
+              "os": "Windows",
+              "cpu": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel",
+              "logical_cpus": 8,
+              "page_bytes": 4096,
+              "wsl": false,
+              "enforcement": "Windows process working set"
+            },
+            "fraction_of_available": 0.4,
+            "working_set_bytes": 7385489408,
+            "reserve_bytes": 3435973836,
+            "model_bytes": 16564259744,
+            "weight_to_budget_ratio": 2.243,
+            "equivalent_budget_chunks": 3,
+            "physical_model_slices_created": 0,
+            "meaning": "Chunks are a capacity illustration only. The OS pages mapped weights; no fixed slices are loaded in sequence.",
+            "warning": "Working set is not total host/cache/commit use. Linux cgroup accounting differs; neither is a fit guarantee."
+          }
+        },
+        "mode": "memory-mapped CPU; no repacking; one native process per request",
+        "code_executed": false,
+        "bulk_prefetch_disable_requested": true,
+        "working_set_limit": {
+          "hard_working_set_limit": true,
+          "maximum_bytes": 7385489408,
+          "flags": 6
+        },
+        "load_seconds": 6.332,
+        "bulk_prefetch_disable_confirmed": false,
+        "context_admission": {
+          "prompt_tokens": 682,
+          "output_budget": 2048,
+          "template_margin": 64,
+          "context": 4096
+        },
+        "status": "error",
+        "error": "Request canceled by unload.",
+        "worker_exited": true,
+        "partial_capture": {
+          "enabled": true,
+          "bytes": 787,
+          "sender_finished": true,
+          "transport_complete": false,
+          "complete": false,
+          "file": "partial.txt",
+          "events": "events.jsonl",
+          "warning": "Diagnostic text only; incomplete output is not eligible for grading."
+        },
+        "seconds": 1622.099,
+        "summary": {
+          "peak_rss_gib": 6.878318786621094,
+          "minimum_available_ram_gib": 5.761081695556641
+        }
+      },
+      "raw_receipt_sha256": "5d8a14146b043f4f0870bbfe6847c2aa11b8dd5a599a7530b1dc96260573c3c7",
+      "partial_prefix": "{\n  \"files\": {\n    \"pager.py\": \"def read_all(fetch, filters=None, max_pages=20):\\n    if not isinstance(max_pages, int) or isinstance(max_pages, bool) or max_pages <= 0:\\n        raise ValueError(\\\"max_pages must be a positive integer\\\")\\n    \\n    query = dict(filters or {})\\n    for key in ('pageSize', 'pageToken', 'pageOffset'):\\n        if key in query:\\n            raise ValueError(f\\\"Filter contains reserved pagination key: {key}\\\")\\n    \\n    rows = []\\n    seen_ids = set()\\n    total_count = None\\n    page_offset = 0\\n    last_token = None\\n    \\n    for _ in range(max_pages):\\n        request = dict(query)\\n        request['pageSize'] = 100\\n        request['pageOffset'] = page_offset\\n        \\n        if last_token:\\n            request['pageToken'] = last_token\\n",
+      "eligible_for_grading": false
+    }
+  ],
+  "downloads": {
+    "qwen38-f16": {
+      "status": {
+        "model": "qwen38-f16",
+        "total_bytes": 54657733952,
+        "completed_bytes": 4452253696,
+        "inference_started": false,
+        "errors": []
+      },
+      "verified_manifest_present": false
+    },
+    "qwen38-standard-q4": {
+      "status": {
+        "model": "qwen38-standard-q4",
+        "total_bytes": 16810714432,
+        "completed_bytes": 5713690624,
+        "inference_started": false,
+        "errors": []
+      },
+      "verified_manifest_present": false
+    },
+    "coder-next-bf16": {
+      "status": {
+        "model": "coder-next-bf16",
+        "total_bytes": 159458415168,
+        "completed_bytes": 5577375744,
+        "inference_started": false,
+        "errors": []
+      },
+      "verified_manifest_present": false
+    }
+  },
+  "always_raise_calibration": {
+    "handwritten": true,
+    "model_called": false,
+    "passed": 20,
+    "total": 25,
+    "accepted": false,
+    "failed_cases": [
+      "terminal_no_metadata",
+      "empty_total_zero",
+      "capped_offset_and_filters",
+      "token_then_offset",
+      "token_without_total"
+    ],
+    "source": {
+      "pager.py": "def read_all(fetch, filters=None, max_pages=20):\n    raise ValueError(\"deliberately wrong control\")\n"
+    },
+    "source_sha256": "d15580659fad09669d32bf6ad5550c7b75840d12d7dbcc4ee184d97cb8c5e8ae",
+    "meaning": "Negative-heavy raw case fractions are not task acceptance."
+  }
+}

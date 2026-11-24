@@ -17,6 +17,7 @@ class HandoffTests(unittest.TestCase):
             args=['handoff','--legacy',str(legacy),'--request-id','a'*32,'--legacy-deadline',str(time.time()+30),
                 '--output',str(output),'--backend',sys.executable]
             with patch.object(sys,'argv',args),patch('scripts.handoff_long_retest.Path.home',return_value=root), \
+                    patch('scripts.handoff_long_retest.require_benchmark_enabled'), \
                     patch('scripts.handoff_long_retest.subprocess.Popen',return_value=child) as spawn, \
                     patch('scripts.handoff_long_retest.time.sleep'),patch('scripts.handoff_long_retest.api') as api:
                 self.assertEqual(main(),0)

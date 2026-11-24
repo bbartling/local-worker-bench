@@ -1,5 +1,10 @@
 # Paging evaluation: measurements and a fair next comparison
 
+**Inference paused for independent test critique.** Downloads continue; no queued
+model work will resume automatically. Read [the full Cursor handoff](../HANDOFF.md)
+and [review request](review-request.md). Preparation now supports Q4/FP16/BF16 for
+both families, but those six configurations have not all been tested.
+
 Next comparison: [Open-FDD-inspired project patches](benchmarks/project-patches.md)
 adds pagination, telemetry gaps and a two-file export integration task. Its fixed
 tests and controls are separate from the motor-function results below.
@@ -9,6 +14,8 @@ in 81.9 minutes but passed only 20/25 checks. The user authorized a follow-up
 eight-thread / 120-minute profile with concrete examples and more output space.
 That follow-up is pending, not a passing result. The earlier 49/49 motor scores
 below must not be presented as evidence that sophisticated patches already work.
+The follow-up was subsequently cancelled by the user during its first request;
+it is not a 120-minute timeout or a new failed coding grade.
 
 The matched motor thread follow-up passed 49/49 at eight threads in 1951.473 s,
 versus 1978.139 s at four: only 1.35% lower wall time in one historical pair.
@@ -134,6 +141,7 @@ model. Qwen3.8-27B is a newer general model to compare on coding tasks.
 | Qwen3.8-27B BF16 | Unsloth community GGUF, two parts | 54,657,735,616 | Verified; motor deadline at 90 min, ungraded |
 | Qwen3.8-27B F16 | prithivMLmods community GGUF | 54,657,733,952 | Downloading; FP16 tensor inspection and grading pending |
 | Qwen3.8-27B standard Q4_K_M | Same prithivMLmods revision as F16 | 16,810,714,432 | Downloading; separate from Unsloth UD Q4 |
+| Coder-Next BF16 | Unsloth community GGUF, four parts | 159,458,415,168 | Downloading; no BF16 inference started |
 
 The requested Q4/FP16 comparison uses Coder-Next's Qwen-published pair and the
 new Qwen3.8 pair from one pinned community publisher revision. BF16 is not FP16.

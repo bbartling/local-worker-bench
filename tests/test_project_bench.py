@@ -26,6 +26,13 @@ class ProjectBenchTests(unittest.TestCase):
                 result=self.run_files(task,spec['files'])
                 self.assertGreater(len(result['failures']),0)
 
+    def test_always_raise_pager_demonstrates_why_fraction_is_not_acceptance(self):
+        files={'pager.py':'def read_all(fetch, filters=None, max_pages=20):\n    raise ValueError("deliberately wrong control")\n'}
+        result=self.run_files('pagination',files)
+        self.assertEqual(result['passed'],20)
+        self.assertEqual(result['total'],25)
+        self.assertEqual(len(result['failures']),5)
+
     def test_candidate_schema_and_import_scope(self):
         for files in ({'../pager.py':'pass'},{'pager.py':'import os'}, {'pager.py':'open("secret")'},{'pager.py':'x.__class__'}):
             with self.assertRaises(ValueError):validate_files('pagination',files)

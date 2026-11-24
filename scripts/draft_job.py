@@ -9,6 +9,7 @@ from types import SimpleNamespace
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from local_worker_bench.delegation import JobStore,render_packet
 from local_worker_bench.runner import ask
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 if __name__=='__main__':
@@ -17,7 +18,8 @@ if __name__=='__main__':
     p.add_argument('--model',required=True);p.add_argument('--endpoint',default='http://127.0.0.1:11438')
     p.add_argument('--max-tokens',type=int,choices=range(64,1025),default=512)
     p.add_argument('--timeout',type=int,default=1800)
-    args=p.parse_args();packet=json.loads(args.packet.read_text(encoding='utf-8'))
+    args=p.parse_args();require_benchmark_enabled(Path(__file__).resolve().parents[1])
+    packet=json.loads(args.packet.read_text(encoding='utf-8'))
     if not 5<=args.timeout<=21600:raise ValueError('Timeout must be 5 through 21600 seconds')
     prompt=render_packet(packet);args.output.mkdir(parents=True,exist_ok=False)
     store=JobStore(args.output/'jobs.sqlite');job_id=store.submit(packet);store.claim(job_id)

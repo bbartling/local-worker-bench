@@ -9,6 +9,12 @@ from local_worker_bench.runner import worker_lock
 
 
 class CampaignTests(unittest.TestCase):
+    def setUp(self):
+        # These tests use fake workers and intentionally exercise lifecycle while
+        # the real repository remains paused; pause integration is tested separately.
+        guard=patch('scripts.run_paging_campaign.require_benchmark_enabled')
+        guard.start();self.addCleanup(guard.stop)
+
     def test_busy_worker_waits_without_claiming_then_honors_stop(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);leases=root/'.cache/local-worker-bench';leases.mkdir(parents=True)

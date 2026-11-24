@@ -11,6 +11,7 @@ from local_worker_bench.runner import ask
 from local_worker_bench.tasks import TASKS
 from local_worker_bench.patch_task import PROMPT
 from local_worker_bench.delegation import JobStore,render_packet
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 def packet(task):
@@ -29,6 +30,7 @@ if __name__=='__main__':
     p.add_argument('--output',type=Path,required=True);p.add_argument('--style',choices=('baseline','packet'),default='packet')
     p.add_argument('--tasks',nargs='+',choices=('patch','motor','elapsed'),default=['patch','motor','elapsed'])
     p.add_argument('--timeout',type=int,default=1800);args=p.parse_args()
+    require_benchmark_enabled(Path(__file__).resolve().parents[1])
     args.output.mkdir(parents=True,exist_ok=False);store=JobStore(args.output/'jobs.sqlite')
     try:
         for task in args.tasks:

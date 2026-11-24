@@ -17,6 +17,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.offload_api import Manager,handler_for,read_config
 from local_worker_bench.runner import worker_lock
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 def save(path,value):
@@ -69,6 +70,7 @@ def main():
     p.add_argument('--legacy',type=Path,required=True);p.add_argument('--config',type=Path,required=True)
     p.add_argument('--motor-prompt',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     args=p.parse_args()
+    require_benchmark_enabled(ROOT)
     args.output.mkdir(parents=True,exist_ok=False);record=args.output/'handoff.json'
     state={'state':'waiting_for_legacy_pagination','started_epoch':time.time(),
         'new_profile':{'threads':8,'request_timeout':7200,'output_tokens':2048,'prompt_version':2},

@@ -1,0 +1,27 @@
+{
+  "model": "coder-next-bf16",
+  "repo": "unsloth/Qwen3-Coder-Next-GGUF",
+  "revision": "ce09c67b53bc8739eef83fe67b2f5d293c270632",
+  "files": [
+    {
+      "path": "BF16/Qwen3-Coder-Next-BF16-00001-of-00004.gguf",
+      "bytes": 49004195968,
+      "sha256": "4bc6d05947ea00cd6e841aff721cec4b140831decbcfa0ceee98a591eb977974"
+    },
+    {
+      "path": "BF16/Qwen3-Coder-Next-BF16-00002-of-00004.gguf",
+      "bytes": 49426194752,
+      "sha256": "f3258410cc3966a4888f5565eca2bc98e791b659a7041c3da419a751a5035a9a"
+    },
+    {
+      "path": "BF16/Qwen3-Coder-Next-BF16-00003-of-00004.gguf",
+      "bytes": 49447199840,
+      "sha256": "83b2f953e1bf2f162588430b0110cb0938245f3bf7d488ff8ca15790b5790d37"
+    },
+    {
+      "path": "BF16/Qwen3-Coder-Next-BF16-00004-of-00004.gguf",
+      "bytes": 11580824608,
+      "sha256": "89280f8d77456c2ea0286646384bef74f96d06e4cdb9e65b7632aeb52f9ef499"
+    }
+  ]
+}

@@ -4,6 +4,8 @@ No inference, downloads or generated-code execution. Existing verification
 manifests plus current file sizes and GGUF headers are required.
 """
 import argparse
+from collections import Counter
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -12,9 +14,37 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.project_bench import TASKS,packet,render,grade,digest_files
 from local_worker_bench.paging import verified_files
+from scripts.plan_gguf_partitions import inspect
 
 MODEL_CACHES={'qwen38-q4':'qwen38-q4','coder-next-q4':'qwen3-coder-next-q4',
-    'coder-next-f16':'coder-next-f16','qwen38-f16':'qwen38-f16','qwen38-standard-q4':'qwen38-standard-q4'}
+    'coder-next-f16':'coder-next-f16','qwen38-f16':'qwen38-f16','qwen38-standard-q4':'qwen38-standard-q4',
+    'qwen38-bf16':'qwen38-bf16','coder-next-bf16':'coder-next-bf16'}
+MODEL_FORMATS={'qwen38-q4':'UD-Q4','coder-next-q4':'Q4_K_M','qwen38-standard-q4':'Q4_K_M',
+    'qwen38-f16':'FP16','coder-next-f16':'FP16','qwen38-bf16':'BF16','coder-next-bf16':'BF16'}
+
+
+def inspect_format(alias,files):
+    """Read headers only, never tensor payloads or inference; do not trust filenames."""
+    counts=Counter();names=set();templates=set();architectures=set()
+    for file in files:
+        header=inspect(Path(file),extra_keys=('tokenizer.chat_template',))
+        for tensor in header['tensors']:
+            if tensor['name'] in names:raise ValueError('Duplicate tensor across GGUF parts')
+            names.add(tensor['name']);counts[tensor['ggml_type']]+=1
+        architecture=header['metadata'].get('general.architecture')
+        if architecture:architectures.add(architecture)
+        template=header['metadata'].get('tokenizer.chat_template')
+        if isinstance(template,str):templates.add(hashlib.sha256(template.encode()).hexdigest())
+    format=MODEL_FORMATS[alias]
+    if format in ('FP16','BF16'):
+        expected=1 if format=='FP16' else 30
+        if expected not in counts or set(counts)-{0,expected}:
+            raise ValueError('Unexpected tensor types for '+format+': '+str(counts))
+    elif 12 not in counts:raise ValueError('Expected actual Q4_K tensors')
+    if len(architectures)!=1 or len(templates)>1:raise ValueError('Inconsistent split-model metadata')
+    return {'declared_format':format,'tensor_type_counts':dict(counts),'tensor_count':len(names),
+        'architectures':sorted(architectures),'chat_template_sha256':sorted(templates),
+        'weights_loaded':False,'inference_started':False}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
@@ -36,7 +66,8 @@ def main():
             'capture_partial':True,'memory_fraction':.4,'threads':args.threads,'context':4096,'max_tokens':args.max_tokens,
             'working_set_gib':4,'reserve_gib':6,'private_limit_gib':6,'request_timeout':args.timeout,'load_timeout':600}
         evidence['models'][alias]={'repo':manifest.get('repo'),'revision':manifest.get('revision'),
-            'all_sha256_verified':True,'files':[{k:item[k] for k in ('path','bytes','sha256')} for item in manifest['files']]}
+            'all_sha256_verified':True,'files':[{k:item[k] for k in ('path','bytes','sha256')} for item in manifest['files']],
+            'format_inspection':inspect_format(alias,files)}
     for task,spec in TASKS.items():
         folder=args.output/task;folder.mkdir()
         (folder/'packet.json').write_text(json.dumps(packet(task),indent=2),encoding='utf-8')

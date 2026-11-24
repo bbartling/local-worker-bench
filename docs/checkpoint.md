@@ -1,5 +1,44 @@
 # Paging tool continuation checkpoint
 
+## ACTIVE PAUSE - independent test critique requested
+
+The user may have Cursor finish due to low weekly hosted usage. Root HANDOFF.md
+is the full operational/research handoff; docs/review-request.md is the critique
+brief. Latest requested automatic CPU/RAM defaults are documented as TODO, not
+implemented: RAM .66 already exists in paging-plan, project runners still .40;
+CPU near .66 of affinity-visible logical CPUs with explicit overrides is pending.
+Do not claim that feature complete or resume inference to implement it.
+
+User requested updating test code, then pausing model testing for another model's
+critique. Inference is stopped; downloads remain authorized. INFERENCE_PAUSED
+and AGENTS.md record this. Do not remove markers, resume queues, smoke or draft
+until explicit user resumption. Offline handwritten controls and inspection are allowed.
+
+No llama-server benchmark process or inference/campaign lease remains. Overnight
+dispatcher 9724 and matrix 6680 finished after STOP; precision extension 10388 is
+cancelled. STOP markers remain in results/project-overnight-20261124 (and matrix/)
+and results/qwen38-precision-extension-20261124. Downloads completing must not
+restart inference. Future authorized runs need fresh output directories.
+The revised first pagination request was user-cancelled, not a 120-minute timeout.
+
+Preparation supports six primary configurations: Qwen3.8 standard Q4/FP16/BF16
+and Coder-Next Q4/FP16/BF16; UD Q4 remains extra. Actual header/tensor validation
+is read-only before profile creation. BF16 testing is prepared, not started.
+
+Downloads continue:
+- Qwen3.8 FP16: PID 5032, session 55998, 54.66 GB.
+- Qwen3.8 standard Q4: PID 13208, session 75412, 16.81 GB.
+- Coder-Next BF16: PID 8084, session 31895, 159.46 GB, four parts; Unsloth
+  revision ce09c67b53bc8739eef83fe67b2f5d293c270632.
+Do not launch duplicate writers or remove partials. Cached Qwen3.8 BF16 is retained.
+No BF16 inference extension was launched.
+
+Review handoff: docs/review-request.md. A deliberately always-raising handwritten
+pager passes 20/25 negative-heavy frozen cases but fails all five success scenarios.
+It is rejected; case fraction is not task acceptance. This calibration is not a
+model result and frozen cases remain unchanged. Earlier active plans below are
+historical and superseded by this pause.
+
 ## Newest request: actual Qwen3.8 FP16 plus standard-Q4 control
 
 User requested both families compared at Q4 and FP16; downloading was explicitly

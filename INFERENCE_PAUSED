@@ -1,0 +1,7 @@
+Local benchmark inference paused by the user on 24 November 2026.
+
+The user wants an independent critique of the tests before more model calls.
+Downloads, header inspection and offline handwritten-control checks may continue.
+Do not remove this marker or resume model work without explicit user instruction.
+After resumption, preserve previous STOP markers/results and use fresh run folders.
+Review handoff: docs/review-request.md. Runtime checkpoint: docs/checkpoint.md.

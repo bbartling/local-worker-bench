@@ -19,6 +19,7 @@ sys.path.insert(0,str(ROOT))
 from local_worker_bench.offload_api import Manager,handler_for,read_config
 from local_worker_bench.project_bench import TASKS,packet,render,validate_files,digest_files
 from local_worker_bench.runner import worker_lock
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 def save(path,value):
@@ -35,6 +36,7 @@ def main():
     p.add_argument('--prompt-version',type=int,choices=(1,2),default=1)
     p.add_argument('--hours',type=float,default=16)
     args=p.parse_args()
+    require_benchmark_enabled(ROOT)
     if not 5<=args.timeout<=7200 or not .1<=args.hours<=24:raise ValueError('Finite deadlines required')
     if len(set(args.models))!=len(args.models) or len(set(args.tasks))!=len(args.tasks):raise ValueError('No repeated trials in one cohort')
     if any(not re.fullmatch(r'[a-z0-9_-]{1,64}',model) for model in args.models):raise ValueError('Use path-safe model aliases')

@@ -1,5 +1,17 @@
 # Local Worker Bench: coding-agent context
 
+## Active inference pause - 24 November 2026
+
+The user paused local model testing pending another model's critique of the test
+design. Downloads and offline code/handwritten-control checks may continue.
+Do not start inference, smoke calls, benchmarks or queued model work until the
+user explicitly resumes. Current inference campaigns/dispatchers have stopped;
+preserve STOP markers and claimed/cancelled evidence. Read docs/review-request.md
+and docs/checkpoint.md before any continuation. This pause does not authorize
+stopping unrelated user applications or changing global Ollama settings.
+
+## Project context
+
 The active product is **single-machine OS-managed paging**, not a cluster.
 Read `docs/guide.md`, `docs/agent-guide.md`, and `docs/evaluation.md` first.
 Historical cluster/LAN evidence is indexed in `research/README.md`; do not

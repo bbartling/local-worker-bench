@@ -15,6 +15,7 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from local_worker_bench.runner import api
+from local_worker_bench.pause import require_benchmark_enabled
 
 
 def save(path,data):
@@ -26,7 +27,9 @@ def main():
     p.add_argument('--legacy',type=Path,required=True);p.add_argument('--request-id',required=True)
     p.add_argument('--legacy-deadline',type=float,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--backend',type=Path,required=True)
-    args=p.parse_args();args.output.mkdir(parents=True,exist_ok=True);record=args.output/'handoff.json'
+    args=p.parse_args()
+    require_benchmark_enabled(ROOT)
+    args.output.mkdir(parents=True,exist_ok=True);record=args.output/'handoff.json'
     if not math.isfinite(args.legacy_deadline) or args.legacy_deadline>time.time()+5400:
         raise ValueError('Legacy boundary must be finite and no more than 90 minutes away')
     state={'legacy_request':args.request_id,'legacy_deadline':args.legacy_deadline,

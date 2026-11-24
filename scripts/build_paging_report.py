@@ -72,7 +72,7 @@ p('A model is a numerical program: learned weight arrays plus an architecture th
 p('The SSD stores the complete checkpoint. RAM holds the pages and runtime state needed now. Qwen3-Coder-Next has 80B total parameters but selected experts do work per token. Storage size, active computation and resident memory are different quantities.')
 note('<b>Measured:</b> real 80B Q4 coding on this 32 GB i7-9700 Windows PC. The checkpoint is 48.41 decimal GB / 45.09 GiB. A bigger model can run without every weight being resident together, but its draft can still be wrong.')
 h('What this tool does')
-p('A local API controls a native llama.cpp worker, memory budgets and receipts. The hosted enterprise model remains planner, reviewer and final decision maker. This guide focuses only on single-machine OS paging; earlier cluster research is archived separately.')
+p('A local API controls a native llama.cpp worker, memory budgets and receipts. The hosted enterprise model remains planner, reviewer and final decision maker. This guide focuses on single-machine OS paging. Testing is now paused for independent critique; downloads continue.')
 p('Repository: github.com/bbartling/local-worker-bench','SmallP')
 
 page(2,'Paging, not fixed slices','The operating system chooses which mapped weight pages remain in RAM.')
@@ -92,7 +92,7 @@ p('New profiles also render/tokenize chat before generation, reserving the reque
 table(['Illustrative available RAM','66% before reserve/ceiling checks'],[('6 GiB','3.96 GiB'),('12 GiB','7.92 GiB'),('24 GiB','15.84 GiB')],[230,250])
 p('For a 45.09 GiB checkpoint and 10 GiB residency budget, five budget-sized portions are an explanatory ratio only. They are not actual cutting lines. The OS can retain or reclaim different pages as execution proceeds.')
 h('Guard more than process RSS')
-p('Four threads by default, one worker and fixed context/output keep work bounded. Eight threads are explicitly authorized for the overnight comparison. The watchdog monitors available host RAM, commit, private bytes and observed working set, then stops its owned process on failure. Completed requests unload. Shared file cache still costs memory.')
+p('Existing profiles default to four threads; recorded overnight runs explicitly used eight. A new configurable default near 66% of available logical CPUs is requested but not implemented yet. The watchdog monitors host RAM, commit, private bytes and working set, then stops its owned process on failure. Shared file cache still costs memory.')
 note('A 66% heuristic is not a capacity guarantee. Start with a small smoke request. No application closing, global swap/pagefile tuning or automatic model escalation occurs. Hard limit behavior differs across operating systems.')
 
 page(4,'API: a familiar local request','The request stays small. Memory policy belongs to the registered server profile.')
@@ -141,13 +141,11 @@ p('Prompt/candidate hashes, model/backend revision, startup and prompt/generatio
 p('Full retained evidence and limitations: docs/evaluation.md and docs/benchmarks/data/. CI tests hand-written controls and lifecycle code, never untrusted generated candidates.','SmallP')
 
 page(7,'Models and precision: compare fairly','The existing 80B Q4 is Qwen3-Coder-Next, not a separate third model.')
-table(['Candidate','Weight storage','Current evidence'],[
-    ('Coder-Next Q4_K_M / Qwen','48.41 GB','Verified; measured coding above'),
-    ('Coder-Next F16 / Qwen','159.46 GB','Verified; motor 49/49'),
-    ('Qwen3.8-27B UD-Q4_K_M / Unsloth','16.56 GB','Verified; motor 49/49'),
-    ('Qwen3.8 standard Q4 / prithivMLmods','16.81 GB','Downloading; not graded'),
-    ('Qwen3.8 FP16 / prithivMLmods','54.66 GB','Downloading; not graded')],[235,100,145])
-p('Q4 uses compressed block quantization; FP16 and BF16 are distinct 16-bit floating formats. Cached BF16 is not our requested FP16 control. The new Qwen3.8 standard-Q4/FP16 pair is pinned to one publisher revision; UD Q4 remains separate. More precision can increase paging without improving accepted patches. Expanding Q4 to 16-bit cannot recover lost precision.')
+table(['Format','Qwen3.8-27B','Coder-Next 80B'],[
+    ('Q4_K_M','Standard: 16.81 GB downloading. Extra UD: 16.56 GB verified.','48.41 GB verified; measured coding above.'),
+    ('FP16','54.66 GB downloading; not graded.','159.46 GB verified; motor 49/49.'),
+    ('BF16','54.66 GB verified; motor timed out.','159.46 GB downloading; not graded.')],[75,205,200])
+p('Q4 uses block quantization; FP16 and BF16 are distinct 16-bit formats. Auxiliary F32 tensors may exist. The new Qwen3.8 standard-Q4/FP16 pair shares a publisher revision; UD Q4 stays separate. Conversion provenance can still differ across formats. More precision can increase paging without improving accepted patches; expanding Q4 cannot restore lost precision.')
 h('Passing a function is not passing a project')
 p('The motor task passed 49/49 first try for Qwen3.8 Q4 in 33 minutes and Coder-Next F16 in 42 minutes. BF16 timed out at 90 minutes. The harder pagination patch then produced no accepted first patch:')
 table(['Four-thread pagination','Result','Request wall'],[
@@ -166,10 +164,10 @@ table(['Platform / component','What exists and what needs validation'],[
     ('Durable work','SQLite records queued, drafting and needs-review/failed. A claimed job is never automatically replayed; acceptance checks candidate hash and source revision.')],[125,355])
 p('Linux cgroups account for charged cache and anonymous memory differently from a Windows working-set cap. Linux needs separate constrained tests. File-backed paging is distinct from swap; WSL is not assumed faster.')
 h('Several days means checkpoints, not an endless call')
-p('Each request has a finite timeout and stops for review. Save source revision, packet, candidate, tests, model/backend and next action. A deterministic dispatcher can wait without cloud polling. Hosted-session wakeup, leases, reboot recovery and automatic review handoff are not implemented. Never auto-merge drafts.')
-p('The explicit dispatcher preserves the reference round, runs a matched thread check, then launches three models on three patch tasks one at a time. The revised profile uses eight threads, 4096 context, up to 2048 output tokens, 120 minutes per request and a 24-hour campaign ceiling. All models get the same worked examples and unchanged tests. A STOP file cancels its stage; drafts are never auto-executed or accepted.')
+p('Finite requests return drafts for review. Save revision, packet, candidate, tests and next action. PID locks and durable claims exist; automatic hosted wakeup, reboot recovery and hosted review are not implemented. Never auto-merge drafts.')
+p('Inference and queued stages are paused for critique; downloads cannot restart them. Planned tests compare Q4, FP16 and BF16 for both families with matched tasks and limits. Recorded profiles used eight threads, 4096 context, 2048 output and 120 minutes per request. Future resource defaults are pending: HANDOFF.md.')
 p('The matched Qwen3.8 Q4 motor check passed 49/49 at both thread counts: 33.0 minutes with four, 32.5 with eight. That is only 1.35% lower wall time in one historical pair. Cache, available RAM and actual residency budgets differed. Eight cores do not imply twice the inference speed. Native partial text is saved continuously; incomplete prefixes remain ungraded.')
-p('At low observable quota, commit a checkpoint. A saved file cannot renew usage or keep a hosted agent alive. Current jobs: docs/checkpoint.md.')
+p('The deliberately wrong always-raising pager scores 20/25 on negative-heavy checks, yet fails all success paths and is rejected. Critique that scoring before more model tests. Review: HANDOFF.md and docs/review-request.md.')
 note('Measure hosted cost per accepted patch, including planning, critique and retries. Cloud savings are a hypothesis, not a measured result here. Slow CPU work is acceptable when its accepted output is worthwhile; persistent wrong output is not progress.')
 p('Primary Linux reference: docs.kernel.org/admin-guide/cgroup-v2.html. Active notes: docs/guide.md, docs/agent-guide.md and docs/evaluation.md. Historical cluster material is research context only.','SmallP')
 

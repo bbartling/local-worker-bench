@@ -1,5 +1,12 @@
 # Open-FDD-inspired project patch benchmark
 
+**Paused for independent critique.** Downloads continue, but all inference queues
+have stopped. Read HANDOFF.md and docs/review-request.md from the repository root.
+The six-format preparation code is ready for review, not six successful model runs.
+An always-raising handwritten pager scores 20/25 on the frozen suite, demonstrating
+why raw case fractions are misleading. It fails every success scenario and is
+rejected; the frozen cases were not changed to hide this calibration result.
+
 Synthetic projects inspired by Open-FDD's API pagination, telemetry and SI-unit
 contracts. Open-FDD is read-only inspiration: no source, customer data, deployed
 service, credentials or application configuration is copied or changed.

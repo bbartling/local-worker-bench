@@ -28,6 +28,16 @@ matrix matrix/ beneath that folder. STOP in the dispatcher folder cancels its
 active/waiting stage and prevents subsequent stages. Preserve all old evidence.
 No generated-source execution. Source revision at launch: 6c3a33b.
 
+Boundary observed: F16 pagination completed in 4915.246 s with bundle hash
+e711530e74b161f1afbff9c6fb73d70e3209125101cea0edfee06aeef09de511.
+Supervisor read the entire callback-only file, hash-graded it: 20/25, rejected.
+Grade and review.json are beside the original candidate. Five frozen failures:
+offset caps, token/offset transition, token after total, boolean/float max_pages.
+Coder-Next Q4 asked for clarification in 321.655 s; no source to grade.
+All three original pagination attempts accepted 0/3. A just-claimed old telemetry
+task was cancelled by the handoff and excluded from model attempts. Original
+cohort finished. Dispatcher state is now matched_motor8; new matrix not started.
+
 ## New authorized work: Open-FDD-inspired project patches
 
 User requested going ahead with more sophisticated patching and regular commits

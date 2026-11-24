@@ -31,6 +31,16 @@ class PublicationTests(unittest.TestCase):
             self.assertEqual(result['summary']['fixture']['accepted_tasks'],0)
             self.assertEqual(result['summary']['fixture']['graded_tasks'],0)
 
+    def test_supervisor_cancellation_is_not_a_model_attempt(self):
+        with tempfile.TemporaryDirectory() as folder:
+            trial,record=self.setup_trial(folder)
+            record.update(state='needs_supervisor',error='Campaign stopped/deadline')
+            (Path(folder)/'campaign.json').write_text(json.dumps({'trials':{trial.name:record}}))
+            summary=module.publish(Path(folder))['summary']['fixture']
+            self.assertEqual(summary['claimed_tasks'],1)
+            self.assertEqual(summary['cancelled_tasks'],1)
+            self.assertEqual(summary['attempted_tasks'],0)
+
     def test_grade_for_different_source_is_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
             trial,record=self.setup_trial(folder)

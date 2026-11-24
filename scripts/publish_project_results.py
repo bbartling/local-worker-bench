@@ -24,7 +24,8 @@ def publish(folder):
             'Individual cases are correlated; full-task acceptance is the primary measure.',
             'No hosted cost/effort baseline measured; no cloud-cost savings claim.']}
     for key,record in state['trials'].items():
-        trial=folder/key;item={'record':record,'grade':None,'accepted':False}
+        trial=folder/key;item={'record':record,'grade':None,'accepted':False,
+            'supervisor_cancelled':record.get('error')=='Campaign stopped/deadline'}
         item['packet']=json.loads((trial/'packet.json').read_text())
         item['prompt']=(trial/'prompt.txt').read_text()
         if hashlib.sha256(item['prompt'].encode()).hexdigest()!=record['prompt_sha256']:
@@ -57,11 +58,13 @@ def publish(folder):
                     if review.get('source_sha256')!=record['source_sha256']:
                         raise ValueError('Supervisor review hash mismatch')
                     item['review']=review
-                    item['accepted']=(review.get('decision')=='accept' and grade.get('code_executed') is True
+                    item['accepted']=(not item['supervisor_cancelled'] and review.get('decision')=='accept' and grade.get('code_executed') is True
                         and grade['passed']==grade['total'] and grade['total']>0)
         result['trials'][key]=item
-        summary=result['summary'].setdefault(record['model'],{'accepted_tasks':0,'graded_tasks':0,'attempted_tasks':0,'coding_seconds':0})
-        summary['attempted_tasks']+=1
+        summary=result['summary'].setdefault(record['model'],{'accepted_tasks':0,'graded_tasks':0,'attempted_tasks':0,'cancelled_tasks':0,'claimed_tasks':0,'coding_seconds':0})
+        summary['claimed_tasks']+=1
+        if item['supervisor_cancelled']:summary['cancelled_tasks']+=1
+        else:summary['attempted_tasks']+=1
         if item['grade'] is not None:summary['graded_tasks']+=1
         if item['accepted']:summary['accepted_tasks']+=1
         summary['coding_seconds']+=item.get('candidate',{}).get('seconds',0)

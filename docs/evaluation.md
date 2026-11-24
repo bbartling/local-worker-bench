@@ -3,6 +3,12 @@
 Next comparison: [Open-FDD-inspired project patches](benchmarks/project-patches.md)
 adds pagination, telemetry gaps and a two-file export integration task. Its fixed
 tests and controls are separate from the motor-function results below.
+The initial pagination round accepted **0/3 patches**: Qwen3.8 Q4 timed out at
+90 minutes, Coder-Next Q4 requested examples after 5.4 minutes, and F16 completed
+in 81.9 minutes but passed only 20/25 checks. The user authorized a follow-up
+eight-thread / 120-minute profile with concrete examples and more output space.
+That follow-up is pending, not a passing result. The earlier 49/49 motor scores
+below must not be presented as evidence that sophisticated patches already work.
 
 ## Completed 90-minute retest
 

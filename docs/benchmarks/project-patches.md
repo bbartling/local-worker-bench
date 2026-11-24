@@ -84,12 +84,28 @@ experiment rather than changing the prompt partway through this comparison.
 
 ## Status
 
-The managed cohort is running. Qwen3.8 Q4's pagination request reached its
-90-minute deadline (5401.227 s client wall) without a complete patch. Its 3929-byte
-prefix is preserved and ungraded; peak process RSS was 6.58 GiB and minimum host
-available RAM was 7.60 GiB. Coder-Next Q4 is next. No patch has been accepted yet.
-The live publication snapshot is data/2026-11-24-project-patches.json; future
-requests remain pending rather than receiving invented grades.
+The original pagination reference round finished under the four-thread,
+90-minute, 1024-output-token profile:
+
+| Model | Request wall | Outcome | Accepted |
+| --- | ---: | --- | --- |
+| Qwen3.8 Q4 | 5401.227 s / 90.0 min | Timeout; 3929-byte prefix ungraded | No |
+| Coder-Next Q4 | 321.655 s / 5.4 min | Asked for examples/clarification; no patch | No |
+| Coder-Next F16 | 4915.246 s / 81.9 min | Complete patch, **20/25** checks | No |
+
+The F16 source was inspected before execution: no imports or I/O beyond the
+supplied fetch callback. Frozen failures were capped offset paging, token-to-offset
+transition, token after stated total, boolean max_pages and float max_pages.
+The supervisor rejected the unchanged candidate. A larger precision checkpoint
+did not produce an acceptable first patch on this task. The Q4 clarification reply
+is a safe handoff, not a correctness pass; timeout is ungraded rather than 0/25.
+
+Qwen3.8 peak process RSS was 6.58 GiB, minimum host available RAM 7.60 GiB.
+One subsequently claimed telemetry request was cancelled by the supervisor's
+profile handoff before producing a candidate. It is excluded from model-attempt
+counts; remaining original tasks were not run. The replacement profile is described
+below. Evidence: data/2026-11-24-project-patches.json, including raw source, exact
+prompt, receipt summaries/hashes, frozen failures and the supervisor review.
 
 An earlier hidden launch lost its controller/client without a Python error log;
 its orphan worker was identified and stopped, and the ungraded interruption was

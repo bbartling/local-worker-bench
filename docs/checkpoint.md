@@ -23,6 +23,12 @@ those dead-owner locks, preserved an infrastructure-interruption disposition,
 then explicitly launched the unchanged replacement cohort in the managed session.
 No complete candidate from that interrupted attempt was graded or counted.
 
+Thread follow-up requested: user asked about using more than four threads.
+Preserve the active four-thread matrix; afterward run a matched eight-thread
+trial on a completed task/model. Explicit --threads 8 setup and campaign flags
+are implemented; ordinary profiles still default to four. Do not run this
+concurrently with the matrix or change its active profile.
+
 ## Completed after the three-hour wait
 
 The handoff and finite cohort are finished. No further inference is scheduled.

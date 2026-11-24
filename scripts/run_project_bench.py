@@ -30,6 +30,7 @@ def main():
     p.add_argument('--config',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
     p.add_argument('--models',nargs='+',required=True);p.add_argument('--tasks',nargs='+',choices=TASKS,default=list(TASKS))
     p.add_argument('--port',type=int,default=11440);p.add_argument('--timeout',type=int,default=5400)
+    p.add_argument('--threads',type=int,choices=(4,8),default=4)
     p.add_argument('--hours',type=float,default=16)
     args=p.parse_args()
     if not 5<=args.timeout<=7200 or not .1<=args.hours<=24:raise ValueError('Finite deadlines required')
@@ -38,13 +39,13 @@ def main():
     config=read_config(args.config.resolve())
     for model in args.models:
         profile=config['models'][model]
-        if profile['threads']!=4 or profile['context']!=4096 or profile['max_tokens']!=1024 or profile['memory_fraction']!=.4 or not profile['capture_partial']:
-            raise ValueError('Use matched 4-thread / 4096 context / 1024 output / .40 RAM / capture profiles')
+        if profile['threads']!=args.threads or profile['context']!=4096 or profile['max_tokens']!=1024 or profile['memory_fraction']!=.4 or not profile['capture_partial']:
+            raise ValueError('Use matched configured threads / 4096 context / 1024 output / .40 RAM / capture profiles')
         if profile['request_timeout']!=args.timeout:raise ValueError('Client and server deadline must match')
     args.output.mkdir(parents=True,exist_ok=False)
     state={'source_revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'started_epoch':time.time(),'deadline_epoch':time.time()+args.hours*3600,
-        'request_timeout':args.timeout,'context':4096,'output_tokens':1024,'threads':4,
+        'request_timeout':args.timeout,'context':4096,'output_tokens':1024,'threads':args.threads,
         'memory_fraction':.4,'trials':{},'generated_code_executed':False,'automatic_repairs':False,
         'config_sha256':hashlib.sha256(args.config.read_bytes()).hexdigest(),
         'backend_sha256':hashlib.sha256(Path(config['backend_executable']).read_bytes()).hexdigest()}
@@ -66,7 +67,7 @@ def main():
                 try:
                     command=[sys.executable,'-m','local_worker_bench','ask','--endpoint',f'http://127.0.0.1:{args.port}',
                         '--model',model,'--prompt-file',str((trial/'prompt.txt').resolve()),'--output',str((trial/'candidate.json').resolve()),
-                        '--threads','4','--context','4096','--max-tokens','1024','--timeout',str(args.timeout+30),'--thinking','off']
+                        '--threads',str(args.threads),'--context','4096','--max-tokens','1024','--timeout',str(args.timeout+30),'--thinking','off']
                     with (trial/'client.log').open('w',encoding='utf-8') as log:
                         child=subprocess.Popen(command,cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,
                             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0)

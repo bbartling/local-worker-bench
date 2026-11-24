@@ -39,6 +39,16 @@ class OffloadTests(unittest.TestCase):
         p=self.config['models']['fixture']; self.assertEqual(p['threads'],4); self.assertEqual(p['context'],2048)
         self.assertTrue(offload_api.files_ready(p))
 
+    def test_explicit_eight_thread_profile_keeps_request_fixed_to_profile(self):
+        path=self.root/'eight-config.json'
+        config={'backend_executable':sys.executable,'models':{'fixture':{'files':[str(self.model)],'threads':8}}}
+        path.write_text(json.dumps(config));models=offload_api.read_config(path)['models']
+        offload_api.validate_chat(dict(self.body,options={'num_thread':8}),models)
+        with self.assertRaises(offload_api.ApiError):
+            offload_api.validate_chat(dict(self.body,options={'num_thread':4}),models)
+        config['models']['fixture']['threads']=9;path.write_text(json.dumps(config))
+        with self.assertRaises(ValueError):offload_api.read_config(path)
+
     def test_explicit_overnight_timeout_is_bounded(self):
         path=self.root/'long-config.json'
         config={'backend_executable':sys.executable,'models':{'fixture':{'files':[str(self.model)],'request_timeout':21600}}}

@@ -81,3 +81,15 @@ experiment rather than changing the prompt partway through this comparison.
 
 Harness prepared; model results will be added after complete-source review and
 independent grading. No real Open-FDD patch or autonomous production result is claimed.
+
+### Separate thread-count follow-up
+
+The user asked whether four threads underuses the eight-core i7-9700. Four is
+the desktop-sharing default, not a hardware limit. An explicitly configured
+eight-thread profile is now supported; requests cannot override a profile's
+thread count. Preparation and campaign accept --threads 8. Keep the first matrix
+at four, then repeat an identical completed task with the same model, RAM fraction,
+context and output cap at eight. Record correctness again: changing execution
+settings can change a draft. Cache state, available RAM and run order still limit
+causal speed claims; report prompt and generation throughput separately. More
+threads cannot remove SSD/page-fault stalls and may affect desktop responsiveness.

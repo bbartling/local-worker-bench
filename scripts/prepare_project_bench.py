@@ -17,6 +17,7 @@ from local_worker_bench.paging import verified_files
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--backend',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--threads',type=int,choices=(4,8),default=4,help='8 requires explicit user authorization; default preserves desktop capacity')
     args=p.parse_args()
     if not args.backend.is_file():raise ValueError('Backend missing')
     args.output.mkdir(parents=True,exist_ok=False)
@@ -26,7 +27,7 @@ def main():
         manifest=json.loads((ROOT/'results/model-cache'/cache/'verified-manifest.json').read_text())
         files=verified_files(manifest)
         config['models'][alias]={'files':files,'layer_stream':False,'validate_context':True,
-            'capture_partial':True,'memory_fraction':.4,'threads':4,'context':4096,'max_tokens':1024,
+            'capture_partial':True,'memory_fraction':.4,'threads':args.threads,'context':4096,'max_tokens':1024,
             'working_set_gib':4,'reserve_gib':6,'private_limit_gib':6,'request_timeout':5400,'load_timeout':600}
         evidence['models'][alias]={'repo':manifest.get('repo'),'revision':manifest.get('revision'),
             'all_sha256_verified':True,'files':[{k:item[k] for k in ('path','bytes','sha256')} for item in manifest['files']]}

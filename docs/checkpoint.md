@@ -1,5 +1,29 @@
 # Paging tool continuation checkpoint
 
+## Latest steering: overnight 120-minute / eight-thread follow-up
+
+User explicitly accepts 120-minute requests and wants supervised overnight patch
+cycling. Keep the active four-thread F16 pagination attempt under its original
+90-minute/1024-token settings, then stop the remaining original queue. The
+original nine-request plan is superseded, not falsely reported complete.
+The three pagination reference attempts remain preserved, including Qwen3.8 Q4
+timeout and Coder-Next Q4 needs-context. Any new old-queue task caught in handoff
+is supervisor cancellation, not a model correctness failure.
+
+New dispatcher scripts/handoff_project_overnight.py will wait for that boundary,
+then run one matched eight-thread Qwen3.8 Q4 motor trial (saved identical prompt,
+2048 context, 1024 output, .40 RAM, 5400 sec). After that, a fresh profile-v2
+matrix uses eight threads, 4096 context, 2048 output, 7200 sec, .40 RAM, all
+three models/tasks, 24-hour campaign ceiling. Prompt v2 adds worked examples
+to address the earlier refusal, not test code. Frozen tests/contracts unchanged.
+This is a revised profile/delegation comparison, not a thread-only ablation.
+
+Prepared config: results/project-patch-overnight-setup-20261124/api-config.json.
+Motor prompt: results/retest90-20261123/cohort/qwen38-q4-packet/motor.prompt.txt
+(SHA e8e4dbe0029c80e6d5522f74773c74e524a72b8169aa50ef52889c852ae7c9c4).
+Dispatcher must be launched only once after code checks/commit; use a fresh
+output folder and preserve all old evidence. No generated-source execution.
+
 ## New authorized work: Open-FDD-inspired project patches
 
 User requested going ahead with more sophisticated patching and regular commits

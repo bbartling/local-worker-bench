@@ -61,6 +61,15 @@ class OffloadTests(unittest.TestCase):
             with self.subTest(options=options),self.assertRaises(offload_api.ApiError):
                 offload_api.validate_chat(dict(self.body,options=options),self.config['models'])
 
+    def test_longer_output_requires_explicit_profile_and_context_still_checks(self):
+        path=self.root/'long-output.json'
+        config={'backend_executable':sys.executable,'models':{'fixture':{'files':[str(self.model)],'max_tokens':2048,'context':4096}}}
+        path.write_text(json.dumps(config));models=offload_api.read_config(path)['models']
+        _,_,native=offload_api.validate_chat(dict(self.body,options={'num_predict':2048}),models)
+        self.assertEqual(native['max_tokens'],2048)
+        with self.assertRaises(offload_api.ApiError):
+            offload_api.validate_chat(dict(self.body,options={'num_predict':2049}),models)
+
     def test_request_budgets_and_no_tools(self):
         invalid=[{'stream':True},{'options':{'num_thread':8}},{'options':{'num_ctx':8192}},
                  {'options':{'num_predict':1025}},{'tools':[]},{'think':True},

@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from local_worker_bench.project_bench import TASKS,grade,digest_files,validate_files,render
+from local_worker_bench.project_bench import TASKS,grade,digest_files,validate_files,render,packet
 
 
 class ProjectBenchTests(unittest.TestCase):
@@ -48,6 +48,15 @@ class ProjectBenchTests(unittest.TestCase):
             self.assertLess(len(text),6000)
             self.assertNotIn('reference',json.loads(text[text.index('{'):]))
             for source in spec['files'].values():self.assertIn(source,json.loads(text[text.index('{'):])['excerpt'])
+
+    def test_original_prompt_stays_pinned_and_revised_prompt_keeps_fixture(self):
+        import hashlib
+        self.assertEqual(hashlib.sha256(render('pagination').encode()).hexdigest(),'05344a8db00315f0965267a0de2830e03cab13fa03d860f1e2c0f0f43febc96f')
+        for task in TASKS:
+            revised=render(task,2);spec=json.loads(revised[revised.index('{'):])
+            self.assertEqual(spec['base_revision'],packet(task)['base_revision'])
+            self.assertEqual(spec['acceptance'],packet(task)['acceptance'])
+            self.assertTrue(spec['examples'])
 
 
 if __name__=='__main__':unittest.main()

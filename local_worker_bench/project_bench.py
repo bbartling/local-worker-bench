@@ -195,9 +195,30 @@ def packet(task):
     }
 
 
-def render(task):
+EXAMPLES = {
+    'pagination': [
+        'First reply points=[{id:r1}], totalCount=2; next request has pageOffset=1. Second reply points=[{id:r2}], totalCount=2; return both rows.',
+        'totalCount changing from 2 to 3, an already-seen id, non-list points or an empty page before the stated total must raise ValueError. No test code or further application context is required.'
+    ],
+    'telemetry': [
+        '[(0,True),(60,None),(120,False)] with max_gap=300 yields fault_hours=1/60 and covered_hours=1/60; the unknown left state contributes nothing.',
+        '[(0,False),(0,True),(60,False)] uses the last state at zero, so both durations are 1/60. An invalid earlier duplicate must still be rejected.'
+    ],
+    'export': [
+        'Input [{id:r1,value:32,unit:F}] yields [{id:r1,si:0.0}] without changing the original input.',
+        'to_si(None,K) raises ValueError; to_si(None,C) returns None. report must call its imported to_si helper.'
+    ],
+}
+
+
+def render(task, version=1):
+    if version not in (1,2):raise ValueError('Unknown prompt version')
+    spec=packet(task)
+    if version==2:
+        spec['examples']=EXAMPLES[task]
+        spec['task']+=' Prefer compact readable code, no explanatory comments or prose. Implement the stated contract; request context only for an actual missing dependency or contradictory requirement.'
     return ('You are a supervised coding drafter. Return one JSON object with files mapping '
-            'each allowed path to its complete source. Do not execute anything.\n' + json.dumps(packet(task), indent=2))
+            'each allowed path to its complete source. Do not execute anything.\n' + json.dumps(spec, indent=2))
 
 
 def validate_files(task, files):

@@ -108,3 +108,33 @@ context and output cap at eight. Record correctness again: changing execution
 settings can change a draft. Cache state, available RAM and run order still limit
 causal speed claims; report prompt and generation throughput separately. More
 threads cannot remove SSD/page-fault stalls and may affect desktop responsiveness.
+
+### Authorized overnight profile, revised prompt
+
+The user subsequently authorized a 120-minute deadline for overnight patch cycling.
+Finish the active F16 pagination request under its original settings, then stop
+the remaining original queue. Preserve the three-model pagination reference round,
+including timeout and needs-context outcomes. If the old loop claims a subsequent
+task during handoff, its cancellation is a supervisor policy change, not a coding
+failure. The original nine-task matrix is therefore superseded, not completed.
+
+`scripts/handoff_project_overnight.py` first repeats the prior successful Qwen3.8
+Q4 motor prompt with eight threads: same saved prompt hash, 2048 context, 1024
+output, .40 RAM and 90-minute deadline. This isolates the configured thread change
+from deliberate prompt/output/deadline changes; uncontrolled host/cache state still
+prevents a rigorous causal speed claim. Source must be reviewed and graded again.
+
+It then launches a fresh three-model/three-task round: eight threads, 4096 context,
+2048 output, 120-minute end-to-end request deadline, unchanged RAM guards, and a
+24-hour campaign deadline. Profile v2 includes compact worked examples and asks
+for concise code. All models receive identical revised packets, using the same
+broken sources, contracts and frozen tests. Clarification is informed by the
+earlier needs-context reply. This is a follow-up profile/delegation experiment,
+not a pristine first-pass result or a thread-only/precision-only comparison.
+Default profiles remain four threads; longer outputs require explicit registration.
+
+The dispatcher, motor request and new matrix only save drafts. The hosted
+supervisor still owns inspection, tests, any one targeted repair and acceptance.
+No generated tests, source execution or unattended patch acceptance is added.
+STOP in the dispatcher's output prevents further stages and cancels its active
+stage. The old and new outputs are separate and no claimed job is replayed.

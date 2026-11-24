@@ -72,7 +72,7 @@ def main(argv=None):
     helper.add_argument('--allow-lan', action='store_true', help='Explicitly allow a numeric RFC1918 IPv4 endpoint')
     helper.add_argument('--threads', type=bounded(1, 12), default=4)
     helper.add_argument('--context', type=bounded(512, 8192), default=2048)
-    helper.add_argument('--max-tokens', type=bounded(64, 1024))
+    helper.add_argument('--max-tokens', type=bounded(64, 2048))
     helper.add_argument('--timeout', type=bounded(5, 21600))
     helper.add_argument('--thinking', choices=('off', 'low', 'medium', 'high'), default='off')
     helper.add_argument('--response-format', choices=('json', 'text'), default='json',

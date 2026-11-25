@@ -12,7 +12,7 @@ A supervised local coding worker for models larger than RAM. One computer,
 CPU inference, model weights on SSD, and the operating system managing which
 pages stay in memory. The hosted agent plans, reviews, tests and accepts every patch.
 
-**Inference paused for test review.** Downloads continue. Read [the Cursor handoff](HANDOFF.md) before continuing.
+**Suite-3 pilot closed.** Winner kept: `qwen38-standard-q4` (Ollama tag + GGUF cache). See [HANDOFF.md](HANDOFF.md) and [the research PDF](docs/reports/os-paging-research.pdf).
 
 - Windows: measured Qwen3-Coder-Next **80B Q4** inference on an i7-9700 / 32 GB PC.
 - Motor function: Qwen3.8 Q4 and Coder-Next F16 each passed **49/49**. Harder pagination: **0/3 patches accepted**.

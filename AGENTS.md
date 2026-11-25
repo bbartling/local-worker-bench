@@ -1,14 +1,15 @@
 # Local Worker Bench: coding-agent context
 
-## Inference resumed - 24 November 2026
+## Pilot closed - 25 November 2026
 
-User explicitly resumed Suite-3 six-format project-patch matrix. Durable
-dispatcher: `scripts/handoff_suite3_six_matrix.py` →
-`results/suite3-six-matrix-20261124/`. Wave A (verified) then hour-sleep until
-Wave B downloads verify. Write `STOP` in that folder to cancel. Do not start a
-second competing matrix or kill unrelated apps / change global Ollama settings.
-Preserve old STOP markers and evidence elsewhere. Downloads may contend with
-timing — disclose in publication.
+Suite-3 six-format matrix finished and graded. **Winner kept on disk:**
+`qwen38-standard-q4` (Qwen3.8-27B Q4_K_M). Other GGUF caches were deleted to
+free space. Paper: `docs/reports/os-paging-research.pdf`. Import into stock
+Ollama: `scripts/import_winner_to_ollama.ps1` → tag `qwen38-standard-q4`.
+
+Do not relaunch the full matrix or re-download deleted formats unless the user
+explicitly asks. One inference worker at a time. Do not change pagefile/firewall
+or kill unrelated apps. Raw receipts stay under ignored `results/`.
 
 ## Project context
 
@@ -18,12 +19,11 @@ Historical cluster/LAN evidence is indexed in `research/README.md`; do not
 restore those defaults or use them as current machine configuration.
 
 Use synthetic fixtures. Never commit weights, credentials, application data or
-private logs. Raw receipts/downloads stay under ignored `results/`. Published
-benchmark evidence must retain failures and source hashes and remove private paths.
+private logs. Published benchmark evidence must retain failures and source hashes
+and remove private paths.
 
 Reading context does not authorize inference. An explicit current-task request
 does; respect any later pause. Four CPU threads, one inference worker at a time.
-Do not change global Ollama/pagefile/firewall settings or close work applications.
 Model downloads may run concurrently when authorized; disclose I/O contention
 in benchmark timing and record hashes before inference.
 

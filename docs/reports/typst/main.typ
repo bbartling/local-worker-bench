@@ -23,15 +23,15 @@
   #v(0.25em)
   #text(size: 9.2pt)[Enterprise supervision · Open-FDD as a typical biweekly engineering vehicle]
   #v(0.1em)
-  #text(size: 8pt, fill: luma(70))[24 November 2026 · Suite‑3 matrix in progress]
+  #text(size: 8pt, fill: luma(70))[25 November 2026 · Suite‑3 graded · winner Qwen3.8 standard Q4]
 ]
 
 #v(0.3em)
 #block(width: 100%, inset: 7pt, stroke: 0.7pt + luma(40), fill: luma(247))[
   #text(weight: "bold", size: 8.8pt)[How to read this.]
   #text(size: 8.8pt)[
-    High-level methods now; *winner and trade-offs in the conclusion once Suite‑3 finishes*.
-    Live cells below are wall-clock only until graded. No format is crowned yet.
+    Methods first; conclusion names the *only Suite‑3 accept so far* and the trade-offs.
+    Twelve cells never produced a complete draft (desktop RAM / commit guards). Case fractions alone never crown a format.
   ]
 ]
 
@@ -120,24 +120,37 @@ Six cells: Qwen3.8 and Coder-Next × Q4, FP16, BF16. Suite‑3 synthetic Open-FD
 
 #figure(
   image("figures/chart-efficiency-size-time.png", width: 94%),
-  caption: [Efficiency sketch: disk size vs wall minutes. Live Suite‑3 pagination drafts are ungraded; dashed line = 120 min deadline.],
+  caption: [Efficiency sketch: disk size vs wall minutes. Dashed line = 120 min deadline. Winner kept on disk: Qwen3.8 standard Q4.],
 )
 
-*Live Wave A (ungraded drafts):* Coder-Next Q4 pagination ~12.6 min; Coder-Next FP16 ~52 min; Qwen3.8 standard Q4 in flight. Wave B waits on remaining FP16/BF16 downloads (hour polls).
+*Graded Suite‑3 six-format matrix (run2):* 18 cells. Six complete drafts reviewed + hash-gated; twelve stopped incomplete (HTTP 503 free-RAM or commit-reserve guards—not format crowns).
 
-= Conclusion — winner rules (fill when Suite‑3 completes)
+#figure(
+  table(
+    columns: (1.5fr, 1.1fr, 0.9fr, 1.4fr),
+    align: (left, left, right, left),
+    [*Cell (task · model)*], [*Suite‑3*], [*Min*], [*Disposition*],
+    [telemetry · Qwen3.8 Q4], [28/28], [46], [*accept*],
+    [telemetry · Coder FP16], [24/28], [61], [needs\_supervisor],
+    [telemetry · Coder Q4], [23/28], [11], [needs\_supervisor],
+    [pagination · Coder FP16], [25/33], [52], [needs\_supervisor],
+    [pagination · Qwen3.8 Q4], [25/33], [73], [needs\_supervisor],
+    [pagination · Coder Q4], [17/33], [13], [needs\_supervisor],
+    [export · all four Wave A], [—], [—], [incomplete / 503],
+    [Wave B · FP16/BF16 ×3], [—], [—], [incomplete / commit],
+  ),
+  caption: [Suite‑3 grades after source review. Accept requires full task score + matching review hash. Incomplete cells are resource stops, not “BF16 failed the suite.”],
+)
 
-If the matrix finishes in time, the conclusion must answer four questions in plain language:
+= Conclusion — winner and trade-offs
 
-1. *Did it work?* At least one accepted Suite‑3 project patch under enterprise review, or an honest “not yet.”
-2. *Who won quality?* Most *accepted tasks* (first pass, then after one repair). Ties: fewer critical refusals/timeouts.
-3. *Q4 vs FP16 vs BF16?* Same-family pairs only. Q4 = quantized/smaller; FP16/BF16 = fuller 16-bit files (BF16 ≠ FP16). Report whether 16-bit bought any accepted-task gain worth the extra hours of paging.
-4. *Best trade-off?* The efficient winner minimizes wall time and disk size among models that still *accept*. A fast refusal is not a win. A huge FP16 that barely beats Q4 on quality but costs 4× time is not “best value.”
+1. *Did it work?* Yes, narrowly: *one* Suite‑3 accept—`telemetry` drafted by *Qwen3.8 standard Q4* (~16.8 GB, ~46 min, 28/28 cases).
+2. *Who won quality?* On accepted tasks: Qwen3.8 Q4 only. Near-misses (25/33 pagination, 24/28 telemetry on Coder FP16) are not accepts. No export or Wave‑B draft completed.
+3. *Q4 vs FP16 vs BF16?* Same-family evidence is incomplete. Q4 produced the sole accept and the fastest complete drafts. FP16 completed some drafts but bought *no* extra accept. BF16 cells hit commit/RAM guards before a gradeable bundle—do not read that as “BF16 is worse at coding.”
+4. *Best trade-off?* *Efficient winner for this pilot:* Qwen3.8 standard Q4—accepted telemetry, smallest disk among the six artifacts, and mid-range wall time. Coder FP16 is a slower near-miss, not a quality crown. Heavy 16-bit files remain useful *only if* later retries finish under a quieter desktop commit budget.
 
-*Provisional (not a crown):* smaller Q4 files draft faster in early and live wall clocks; 16-bit files are slower under paging; easy motors saturated; hard patches remain the real test for Open-FDD-style biweekly cycles.
-*When graded:* replace this paragraph with the named winner, a one-row trade-off table (accepts / minutes / GB), and an updated efficiency chart.
-
-Until then: enterprise orchestration + OS-paged local drafts remain a credible way to spend nights between Open-FDD releases—if Suite‑3 accepts prove it.
+For Open-FDD biweekly cycles: enterprise orchestration + OS-paged Q4 overnight drafts are already a credible overnight lane for *bounded* helpers; hard pagination/export still need one supervisor repair or a quieter retry wave—not a format swap alone.
+Post-matrix quiet retries: Qwen Q4 export/pagination often *timed out mid-JSON* under load; Coder-Next Q4 finished an export draft in ~8 min (25/28) and one targeted repair reached 27/28 (still not accept—int-subclass check). A supervisor rewrite of the Qwen Q4 pagination near-miss reaches 33/33 and proves Suite‑3 is solvable—*supervisor rewrites are not local-model accepts*.
 
 #v(0.4em)
 #text(size: 8.2pt, weight: "bold")[References]

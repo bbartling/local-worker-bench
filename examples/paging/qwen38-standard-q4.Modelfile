@@ -1,0 +1,6 @@
+# Suite-3 pilot winner: Qwen3.8-27B standard Q4_K_M (prithivMLmods).
+# Run from the verified GGUF directory, or use scripts/import_winner_to_ollama.ps1.
+FROM ./Qwen3.8-27B.Q4_K_M.gguf
+PARAMETER num_ctx 4096
+PARAMETER temperature 0.2
+PARAMETER num_thread 5
